@@ -558,7 +558,8 @@ bool ParseObj8Command(const std::vector<std::string> &tokens, CSLPackage_t &pack
 	XPLMGetSystemPath(xsystem);
 
 #if APL
-	HFS2PosixPath(xsystem, xsystem, 1024);
+	if (XPLMIsFeatureEnabled("XPLM_USE_NATIVE_PATHS") == 0)
+		HFS2PosixPath(xsystem, xsystem, 1024);
 #endif
 
 	size_t sys_len = strlen(xsystem);
@@ -868,7 +869,7 @@ bool CSL_LoadCSL(const char * inFolderPath, const char * inRelatedFile, const ch
 
 	if (gIntPrefsFunc("debug", "model_matching", 0))
 		XPLMDebugString(string(string(inDoc8643) + " returned " + (aircraft_fi ? "valid" : "invalid") + " fp\n").c_str());
-	
+
 	if (aircraft_fi)
 	{
 		char	buf[1024];
@@ -889,7 +890,7 @@ bool CSL_LoadCSL(const char * inFolderPath, const char * inRelatedFile, const ch
 			// Sample line. Fields are separated by tabs
 			// ABHCO	SA-342 Gazelle 	GAZL	H1T	-
 
-			if(tokens.size() < 5) continue;
+			if (tokens.size() < 5) continue;
 			CSLAircraftCode_t entry;
 			entry.icao = tokens[2];
 			entry.equip = tokens[3];
@@ -916,7 +917,8 @@ bool CSL_LoadCSL(const char * inFolderPath, const char * inRelatedFile, const ch
 			gAircraftCodes[entry.icao] = entry;
 		}
 		fclose(aircraft_fi);
-	} else {
+	}
+	else {
 		XPLMDump() << XPMP_CLIENT_NAME " WARNING: could not open ICAO document 8643 at " << inDoc8643 << "\n";
 		ok = false;
 	}
@@ -945,21 +947,29 @@ bool CSL_LoadCSL(const char * inFolderPath, const char * inRelatedFile, const ch
 			}
 		}
 		fclose(related_fi);
-	} else {
+	}
+	else {
 		XPLMDump() << XPMP_CLIENT_NAME " WARNING: could not open related.txt at " << inRelatedFile << "\n";
 		ok = false;
 	}
 
 	// Iterate through all directories using the XPLM and load them.
 
-	char *	name_buf = (char *) malloc(16384);
-	char ** index_buf = (char **) malloc(65536);
+	char *	name_buf = (char *)malloc(16384);
+	char ** index_buf = (char **)malloc(65536);
 	int	total, ret;
-	
+
 	char folder[1024];
 
 #if APL
-	Posix2HFSPath(inFolderPath, folder, sizeof(folder));
+	if (XPLMIsFeatureEnabled("XPLM_USE_NATIVE_PATHS") == 0)
+	{
+		Posix2HFSPath(inFolderPath, folder, sizeof(folder));
+	}
+	else
+	{
+		strcpy(folder, inFolderPath);
+	}
 #else
 	strcpy(folder,inFolderPath);
 #endif

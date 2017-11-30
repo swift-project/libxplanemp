@@ -328,9 +328,12 @@ const  char * XPMPMultiplayerEnable(void)
 			{
 				gPackages[p].planes[pp].austin_idx = static_cast<int>(gPlanePaths.size());
 				char	buf[1024];
-				strcpy(buf,gPackages[p].planes[pp].file_path.c_str());
+				strcpy(buf, gPackages[p].planes[pp].file_path.c_str());
 #if APL
-				Posix2HFSPath(buf,buf,1024);
+				if (XPLMIsFeatureEnabled("XPLM_USE_NATIVE_PATHS") == 0)
+				{
+					Posix2HFSPath(buf, buf, 1024);
+				}
 #endif
 				gPlanePaths.push_back(buf);
 			}
