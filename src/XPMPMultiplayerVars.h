@@ -254,6 +254,10 @@ struct	XPMPPlane_t {
 	OBJ7Handle                  objHandle;
 	TextureHandle               texHandle;
 	TextureHandle               texLitHandle;
+
+	ObjManager::TransientState      objState;
+	TextureManager::TransientState  texState;
+	TextureManager::TransientState  texLitState;
 };
 
 typedef	XPMPPlane_t *								XPMPPlanePtr;
