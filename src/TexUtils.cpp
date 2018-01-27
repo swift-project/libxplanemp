@@ -273,6 +273,10 @@ extern void XPMPSetupGLDebug();
 
 bool LoadTextureFromMemory(ImageInfo &im, bool magentaAlpha, bool inWrap, bool mipmap, GLuint &texNum)
 {
+	while (GL_NO_ERROR != glGetError()) 
+	{
+		XPLMDebugString(XPMP_CLIENT_NAME ": Something has errored the OpenGL stack prior to calling LoadTextureFromMemory, wtf?\n");
+	}
 	float	tex_anisotropyLevel = gFloatPrefsFunc("planes", "texture_anisotropy", 0.0);
 	if (tex_anisotropyLevel > xpmp_tex_maxAnisotropy) {
 		tex_anisotropyLevel = xpmp_tex_maxAnisotropy;
@@ -301,7 +305,7 @@ bool LoadTextureFromMemory(ImageInfo &im, bool magentaAlpha, bool inWrap, bool m
 	}
 	if (texNumError)
 	{
-		XPLMDebugString(XPMP_CLIENT_NAME " Couldn't generate texture number.");
+		XPLMDebugString(XPMP_CLIENT_NAME ": Couldn't generate texture number.\n");
 		texNum = 0;
 		OGLDEBUG(glPopDebugGroup());
 		return false;

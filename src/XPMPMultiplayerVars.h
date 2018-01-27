@@ -104,6 +104,23 @@ struct	CSLPlane_t {
 		}
 		return modelName;
 	}
+	
+	string getMtlCode() const
+	{
+		string mtlCode;
+		if (!icao.empty())
+		{
+			mtlCode += icao;
+		}
+		if (!airline.empty())
+		{
+			mtlCode += airline;
+		}
+		if (!livery.empty())
+		{
+			mtlCode += livery;
+		}
+	}
 
 	vector<string>              dirNames;       // Relative directories from xsb_aircrafts.txt down to object file
 	string                      objectName;     // Basename of the object file
