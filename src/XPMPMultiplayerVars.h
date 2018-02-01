@@ -90,7 +90,7 @@ struct	CSLPlane_t {
 
 	string getModelName() const
 	{
-		string modelName;
+		string modelName = "";
 		for (const auto &dir : dirNames)
 		{
 			modelName += dir;
@@ -107,7 +107,7 @@ struct	CSLPlane_t {
 	
 	string getMtlCode() const
 	{
-		string mtlCode;
+		string mtlCode = "";
 		if (!icao.empty())
 		{
 			mtlCode += icao;
@@ -120,6 +120,7 @@ struct	CSLPlane_t {
 		{
 			mtlCode += livery;
 		}
+		return mtlCode;
 	}
 
 	vector<string>              dirNames;       // Relative directories from xsb_aircrafts.txt down to object file

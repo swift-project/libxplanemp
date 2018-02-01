@@ -235,11 +235,12 @@ void prepareObj8ForUsingWithAnotherTexture(CSLPlane_t * model, obj_for_acf * obj
 	// generate the name for new object
 	std::string destObjFile = obj8->file;
 	string::size_type pos2 = destObjFile.find_last_of(".");
+	std::string suffix = "_" + model->getMtlCode();
 	if (pos2 != string::npos) {
-		destObjFile.insert(pos2, "_" + model->getMtlCode());
+		destObjFile.insert(pos2, suffix);
 	}
 	else {
-		destObjFile += std::string("_" + model->getMtlCode());
+		destObjFile += suffix;
 	}
 
 	// trying to find an object in cache
