@@ -494,8 +494,6 @@ bool ParseObj8AircraftCommand(const std::vector<std::string> &tokens, CSLPackage
 	}
 
 	package.planes.push_back(CSLPlane_t());
-	package.planes.back().dirNames = { package.path.substr(package.path.find_last_of('/') + 1) };
-	package.planes.back().objectName = tokens[1];
 	package.planes.back().plane_type = plane_Obj8;
 	package.planes.back().file_path = tokens[1];
 	package.planes.back().moving_gear = true;
@@ -520,6 +518,33 @@ bool ParseObj8Command(const std::vector<std::string> &tokens, CSLPackage_t &pack
 
 	// err - obj8 record at stupid place in file
 	if(package.planes.empty() || package.planes.back().plane_type != plane_Obj8) return false;
+
+	if (tokens[1] == "SOLID")
+	{
+		std::string relativePath(tokens[3]);
+		MakePartialPathNativeObj(relativePath);
+		std::string fullPath(relativePath);
+		if (!DoPackageSub(fullPath))
+		{
+			XPLMDump(path, lineNum, line) << XPMP_CLIENT_NAME " WARNING: package not found.\n";
+			return false;
+		}
+
+		std::vector<std::string> dirNames;
+		BreakStringPvt(relativePath.c_str(), dirNames, 0, "/");
+		// Replace the first one being the package name with the package root dir
+		std::string packageRootDir = package.path.substr(package.path.find_last_of('/') + 1);
+		dirNames[0] = packageRootDir;
+		// Remove the last one being the obj itself
+		string objFileName = dirNames.back();
+		dirNames.pop_back();
+
+		// Remove *.obj extension
+		objFileName.erase(objFileName.find_last_of('.'));
+
+		package.planes.back().dirNames = dirNames;
+		package.planes.back().objectName = objFileName;
+	}
 
 	obj_for_acf		att;
 
@@ -578,6 +603,15 @@ bool ParseObj8Command(const std::vector<std::string> &tokens, CSLPackage_t &pack
 	{
 		string texturePath = tokens[4];
 		att.textureFile = texturePath;
+
+		string textureFilename = texturePath;
+		// Remove directory if present.
+		textureFilename.erase(0, textureFilename.find_last_of('/') + 1);
+		// Remove extension if present.
+		textureFilename.erase(textureFilename.find_last_of('.'));
+
+		package.planes.back().textureName = textureFilename;
+
 		if (tokens.size() == 6)
 		{
 			string litTexturePath = tokens[5];
