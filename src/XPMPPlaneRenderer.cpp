@@ -503,7 +503,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				//find or update the actual vert offset in the csl model data
 				cslVertOffsetCalc.findOrUpdateActualVertOffset(*iter->second.plane->model);
 				//correct y value by real terrain elevation
-				bool isClampingOn = (gIntPrefsFunc("PREFERENCES", "CLAMPING", true > 0) ? true : false);
+				const bool isClampingOn = gIntPrefsFunc("PREFERENCES", "CLAMPING", 0);
 				iter->second.y = getCorrectYValue(iter->second.x, iter->second.y, iter->second.z, iter->second.plane->model->actualVertOffset, isClampingOn);
 				if (iter->second.plane->model->plane_type == plane_Austin)
 				{
