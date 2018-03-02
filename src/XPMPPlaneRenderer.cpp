@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2004, Ben Supnik and Chris Serio.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -250,7 +250,7 @@ double getCorrectYValue(double inX, double inY, double inZ, double inModelYOffse
 	}
 	XPLMProbeInfo_t info;
 	info.structSize = sizeof(XPLMProbeInfo_t);
-	XPLMProbeResult res = XPLMProbeTerrainXYZ(terrainProbe, inX, inY, inZ, &info);
+	XPLMProbeResult res = XPLMProbeTerrainXYZ(terrainProbe, static_cast<float>(inX), static_cast<float>(inY), static_cast<float>(inZ), &info);
 	if (res != xplm_ProbeHitTerrain) {
 		return inY;
 	}
@@ -504,7 +504,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				cslVertOffsetCalc.findOrUpdateActualVertOffset(*iter->second.plane->model);
 				//correct y value by real terrain elevation
 				const bool isClampingOn = gIntPrefsFunc("PREFERENCES", "CLAMPING", 0);
-				iter->second.y = getCorrectYValue(iter->second.x, iter->second.y, iter->second.z, iter->second.plane->model->actualVertOffset, isClampingOn);
+				iter->second.y = static_cast<float>(getCorrectYValue(iter->second.x, iter->second.y, iter->second.z, iter->second.plane->model->actualVertOffset, isClampingOn));
 				if (iter->second.plane->model->plane_type == plane_Austin)
 				{
 					planes_austin.insert(multimap<int, PlaneToRender_t *>::value_type(CSL_GetOGLIndex(iter->second.plane->model), &iter->second));
