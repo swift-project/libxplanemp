@@ -21,9 +21,11 @@ public:
 
     class TransientState
     {
-        friend ResourceManager;
+        friend class ResourceManager;
         typename ResourceCache::iterator m_resourceIt;
         typename FutureCache::iterator m_futureIt;
+        bool m_searchedResource = false;
+        bool m_searchedFuture = false;
     };
 
     ResourceManager(std::function<Future(std::string)> factory) : m_factory(factory) {}
@@ -34,14 +36,14 @@ public:
         auto &futureIt = state->m_futureIt;
 
         std::shared_ptr<T> resource;
-        if (isSingular(resourceIt)) { resourceIt = m_resourceCache.find(name); }
+        if (!state->m_searchedResource) { resourceIt = m_resourceCache.find(name); state->m_searchedResource = true; }
         if (resourceIt != m_resourceCache.end())
         {
             resource = resourceIt->second.lock();
         }
         if (resource) { return resource; }
 
-        if (isSingular(futureIt)) { futureIt = m_futureCache.find(name); }
+        if (!state->m_searchedFuture) { futureIt = m_futureCache.find(name); state->m_searchedFuture = true; }
         if (futureIt == m_futureCache.end())
         {
             futureIt = m_futureCache.emplace(name, m_factory(name)).first;
@@ -65,8 +67,8 @@ private:
     ResourceCache m_resourceCache;
     FutureCache m_futureCache;
 
-    template <typename Iterator>
-    static bool isSingular(Iterator i) { return i == Iterator(); }
+//    template <typename Iterator>
+//    static bool isSingular(Iterator i) { return i == Iterator(); }
 };
 
 #endif
