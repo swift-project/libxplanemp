@@ -7,8 +7,13 @@
 #include <chrono>
 #include <map>
 #include <assert.h>
-//#include "XPLMUtilities.h"
 
+// ResourceManager is the central point to get texture and model resources.
+// In case a resource was already loaded and is still in memory, a shared pointer is returned.
+// In case the resource was not yet loaded, async loading will be triggered.
+// Until the resource loading is completed an empty pointer will be returned.
+// ResourceManager itself keeps weak pointers of each loaded resource. As
+// soon as all shared pointers are deleted, the resource will be freed automatically.
 template <typename T>
 class ResourceManager
 {
@@ -19,6 +24,10 @@ public:
     using ResourceCache = std::map<std::string, std::weak_ptr<T>>;
     using FutureCache = std::map<std::string, Future>;
 
+    // Class for improved resurce loading: 
+    // Every frame, `get()` was being called, to check if loading finished yet.
+    // Every time `get()` was called, it performed at least one map lookup, which is an expensive operation to do every frame.
+    // This patch introduces a TransientState object that caches the map iterators from one call of `get()` to the next.
     class TransientState
     {
         friend class ResourceManager;
@@ -66,9 +75,6 @@ private:
     std::function<Future(std::string)> m_factory;
     ResourceCache m_resourceCache;
     FutureCache m_futureCache;
-
-//    template <typename Iterator>
-//    static bool isSingular(Iterator i) { return i == Iterator(); }
 };
 
 #endif
