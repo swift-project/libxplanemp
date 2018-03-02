@@ -526,7 +526,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				glPushMatrix();
 				glTranslatef(iter->second.x, iter->second.y, iter->second.z);
 				glRotatef(iter->second.plane->pos.heading, 0.0, -1.0, 0.0);
-				glRotatef(iter->second.plane->pos.pitch, 01.0, 0.0, 0.0);
+				glRotatef(iter->second.plane->pos.pitch, -1.0, 0.0, 0.0);
 				glRotatef(iter->second.plane->pos.roll, 0.0, 0.0, -1.0);
 
 				// Safety check - if plane 1 isn't even loaded do NOT draw, do NOT draw plane 0.
