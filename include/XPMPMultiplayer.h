@@ -84,12 +84,12 @@ extern "C" {
  */
 typedef	struct {
 	long	size;
-	double	lat;
-	double	lon;
-	double	elevation;
-	float	pitch;
-	float	roll;
-	float	heading;
+	double	lat = 0.0;
+	double	lon = 0.0;
+	double	elevation = 0.0;
+	float	pitch = 0.0;
+	float	roll = 0.0;
+	float	heading = 0.0;
 	char label[32];
 } XPMPPlanePosition_t;
 
