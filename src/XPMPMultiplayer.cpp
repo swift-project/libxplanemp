@@ -787,3 +787,10 @@ void		XPMPDumpOneCycle(void)
 	CSL_Dump();
 	gDumpOneRenderCycle = true;
 }
+
+void XPMPGetVerticalOffset(XPMPPlaneID inPlane, double *outOffset)
+{
+	XPMPPlanePtr plane = XPMPPlaneFromID(inPlane);
+	if (!plane->model) { return; }
+	*outOffset = plane->model->actualVertOffset;
+}
