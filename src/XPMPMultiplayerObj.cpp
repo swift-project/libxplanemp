@@ -118,7 +118,7 @@ int	OBJ_PointPool::AddPoint(float xyz[3], float st[2])
 				(st[1] == mPointPool[n+4]))
 			return static_cast<int>(n/8);	// Clients care about point # not array index
 	}
-#endif	
+#endif
 
 	// If we're here, no match was found so we add it to the pool
 	// Add XYZ
@@ -168,7 +168,7 @@ void OBJ_PointPool::CalcTriNormal(int idx1, int idx2, int idx3)
 	v2[0] = mPointPool[idx2*8  ] - mPointPool[idx3*8  ];
 	v2[1] = mPointPool[idx2*8+1] - mPointPool[idx3*8+1];
 	v2[2] = mPointPool[idx2*8+2] - mPointPool[idx3*8+2];
-	
+
 	// We do NOT normalize the cross product; we want larger triangles
 	// to make bigger normals.  When we blend them, bigger sides will
 	// contribute more to the normals.  We'll normalize the normals
@@ -216,7 +216,7 @@ void OBJ_PointPool::NormalizeNormals(void)
 				swapped_add(mPointPool[n+7], mPointPool[m+7]);
 			}
 	}
-#endif	
+#endif
 	for (size_t n = 5; n < mPointPool.size(); n += 8)
 	{
 		NormalizeVec(&mPointPool[n]);
@@ -241,7 +241,7 @@ void OBJ_PointPool::DebugDrawNormals()
 static	map<string, int>	sTexes;
 static vector<ObjInfo_t>	sObjects;
 
-static ObjManager gObjManager(OBJ_LoadModelAsync);
+static ObjManager gObjManager(OBJ_LoadModel);
 static TextureManager gTextureManager(OBJ_LoadTexture);
 
 static std::queue<GLuint> sFreedTextures;
@@ -289,10 +289,8 @@ void DeleteTexture(CSLTexture_t* texture)
 	delete texture;
 }
 
-TextureManager::Future OBJ_LoadTexture(const string &path)
+TextureManager::ResourceHandle OBJ_LoadTexture(const string &path)
 {
-	return std::async(std::launch::async, [path]
-	{
 #if DEBUG_RESOURCE_CACHE
 		XPLMDebugString(XPMP_CLIENT_NAME ": Loading texture ");
 		XPLMDebugString("(");
@@ -300,29 +298,28 @@ TextureManager::Future OBJ_LoadTexture(const string &path)
 		XPLMDebugString(")\n");
 #endif
 
-		int derez = 5 - gIntPrefsFunc("planes", "resolution", 5);
-		ImageInfo im;
-		CSLTexture_t texture;
-		texture.id = 0;
-		if (!LoadImageFromFile(path, true, derez, im, NULL, NULL))
-		{
-			XPLMDebugString(XPMP_CLIENT_NAME ": WARNING: ");
-			XPLMDebugString(path.c_str());
-			XPLMDebugString(" failed to load.");
-			XPLMDebugString("\n");
-			texture.loadStatus = Failed;
-			return std::make_shared<CSLTexture_t>(texture);
-		}
-		if (!VerifyTextureImage(path, im)) {
-			// VTI reports it's own errors.
-			texture.loadStatus = Failed;
-			return std::make_shared<CSLTexture_t>(texture);			
-		}
-		texture.path = path;
-		texture.im = im;
-		texture.loadStatus = Succeeded;
-		return TextureManager::ResourceHandle(new CSLTexture_t(texture), DeleteTexture);
-	});
+	int derez = 5 - gIntPrefsFunc("planes", "resolution", 5);
+	ImageInfo im;
+	CSLTexture_t texture;
+	texture.id = 0;
+	if (!LoadImageFromFile(path, true, derez, im, NULL, NULL))
+	{
+		XPLMDebugString(XPMP_CLIENT_NAME ": WARNING: ");
+		XPLMDebugString(path.c_str());
+		XPLMDebugString(" failed to load.");
+		XPLMDebugString("\n");
+		texture.loadStatus = Failed;
+		return std::make_shared<CSLTexture_t>(texture);
+	}
+	if (!VerifyTextureImage(path, im)) {
+		// VTI reports it's own errors.
+		texture.loadStatus = Failed;
+		return std::make_shared<CSLTexture_t>(texture);
+	}
+	texture.path = path;
+	texture.im = im;
+	texture.loadStatus = Succeeded;
+	return TextureManager::ResourceHandle(new CSLTexture_t(texture), DeleteTexture);
 }
 
 bool	OBJ_Init(const char * inTexturePath)
@@ -524,11 +521,31 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 	return ObjManager::ResourceHandle(new ObjInfo_t(objInfo), DeleteObjInfo);
 }
 
-ObjManager::Future OBJ_LoadModelAsync(const string &inFilePath)
+void OBJ_LoadModelAsync(const std::shared_ptr<XPMPPlane_t> &plane)
 {
-	return std::async(std::launch::async, [inFilePath]
+	gObjManager.loadAsync(plane->model->file_path, [plane](const ObjManager::ResourceHandle &handle)
 	{
-		return OBJ_LoadModel(inFilePath);
+		std::atomic_store(&plane->objHandle, handle);
+
+		string texturePath = plane->model->texturePath;
+		if (texturePath.empty()) { texturePath = plane->objHandle->defaultTexture; }
+
+		gTextureManager.loadAsync(texturePath, [plane](const TextureManager::ResourceHandle &textureHandle)
+		{
+			std::atomic_store(&plane->texHandle, textureHandle);
+			string textureLitPath = plane->model->textureLitPath;
+			if (textureLitPath.empty()) { textureLitPath = plane->objHandle->defaultLitTexture; }
+
+			gTextureManager.loadAsync(textureLitPath, [plane](const TextureManager::ResourceHandle &textureLitHandle)
+			{
+				std::atomic_store(&plane->texLitHandle, textureLitHandle);
+
+				gThreadSynchronizer.queueCall([=]()
+				{
+					plane->planeLoadedFunc(plane.get(), true, plane->ref);
+				});
+			});
+		});
 	});
 }
 
@@ -588,76 +605,40 @@ void OBJ_MaintainTextures() {
 void	OBJ_PlotModel(XPMPPlane_t *plane, float inDistance, double /*inX*/,
 					  double /*inY*/, double /*inZ*/, double /*inPitch*/, double /*inRoll*/, double /*inHeading*/)
 {
-	if (! plane->objHandle)
-	{
-		plane->objHandle = gObjManager.get(plane->model->file_path, &plane->objState);
-		if (plane->objHandle && plane->objHandle->loadStatus == Failed)
-		{
-			// Failed to load
-			XPLMDebugString("Skipping ");
-			XPLMDebugString(plane->model->getModelName().c_str());
-			XPLMDebugString(" since object could not be loaded.");
-			XPLMDebugString("\n");
-		}
-	}
-	if (! plane->objHandle || plane->objHandle->loadStatus == Failed) { return; }
+	auto objHandle = std::atomic_load(&plane->objHandle);
+	if (! objHandle || objHandle->loadStatus == Failed) { return; }
 
-	// Try to load a texture if not yet done. If one can't be loaded continue without texture
-	if (! plane->texHandle)
+	auto texHandle = std::atomic_load(&plane->texHandle);
+	if (texHandle && texHandle->loadStatus == Succeeded && !texHandle->id)
 	{
-		string texturePath = plane->model->texturePath;
-		if (texturePath.empty()) { texturePath = plane->objHandle->defaultTexture; }
-		plane->texHandle = gTextureManager.get(texturePath, &plane->texState);
-
-		// Async loading completed with failure
-		if (plane->texHandle && plane->texHandle->loadStatus == Failed)
-		{
-			// Failed to load
-			XPLMDebugString("Texture for ");
-			XPLMDebugString(plane->model->getModelName().c_str());
-			XPLMDebugString(" cannot be loaded.");
-			XPLMDebugString("\n");
-		}
-	}
-
-	auto model = plane->model;
-	// Try to load a texture if not yet done. If one can't be loaded continue without texture
-	if (! plane->texLitHandle)
-	{
-		string texturePath = model->textureLitPath;
-		if (texturePath.empty()) { texturePath = plane->objHandle->defaultLitTexture; }
-		plane->texLitHandle = gTextureManager.get(texturePath, &plane->texLitState);
-	}
-
-	if (plane->texHandle && plane->texHandle->loadStatus == Succeeded && !plane->texHandle->id)
-	{
-		plane->texHandle->id = xpmpGetGlTextureId();
-		LoadTextureFromMemory(plane->texHandle->im, true, false, true, plane->texHandle->id);
+		texHandle->id = xpmpGetGlTextureId();
+		LoadTextureFromMemory(texHandle->im, true, false, true, texHandle->id);
 
 #if DEBUG_RESOURCE_CACHE
 		XPLMDebugString(XPMP_CLIENT_NAME ": Finished loading of texture id=");
 		char buf[32];
-		sprintf(buf,"%d", plane->texHandle->id);
+		sprintf(buf,"%d", texHandle->id);
 		XPLMDebugString(buf);
 		XPLMDebugString("\n");
 #endif
 	}
 
-	if (plane->texLitHandle && plane->texLitHandle->loadStatus == Succeeded && !plane->texLitHandle->id)
+	auto texLitHandle = std::atomic_load(&plane->texLitHandle);
+	if (texLitHandle && texLitHandle->loadStatus == Succeeded && !texLitHandle->id)
 	{
-		plane->texLitHandle->id = xpmpGetGlTextureId();
-		LoadTextureFromMemory(plane->texLitHandle->im, true, false, true, plane->texLitHandle->id);
+		texLitHandle->id = xpmpGetGlTextureId();
+		LoadTextureFromMemory(texLitHandle->im, true, false, true, texLitHandle->id);
 
 #if DEBUG_RESOURCE_CACHE
 		XPLMDebugString(XPMP_CLIENT_NAME ": Finished loading of texture id=");
 		char buf[32];
-		sprintf(buf,"%d", plane->texLitHandle->id);
+		sprintf(buf,"%d", texLitHandle->id);
 		XPLMDebugString(buf);
 		XPLMDebugString("\n");
 #endif
 	}
 
-	auto obj = plane->objHandle.get();
+	auto obj = objHandle.get();
 	// Find out what LOD we need to draw
 	int lodIdx = -1;
 	for(size_t n = 0; n < obj->lods.size(); n++)
@@ -682,13 +663,13 @@ void	OBJ_PlotModel(XPMPPlane_t *plane, float inDistance, double /*inX*/,
 
 	int tex = 0;
 	int lit = 0;
-	auto texture = plane->texHandle.get();
+	auto texture = texHandle.get();
 	if(texture && texture->id)
 	{
 		tex = texture->id;
 	}
 
-	auto litTexure = plane->texLitHandle.get();
+	auto litTexure = texLitHandle.get();
 	if (litTexure && litTexure->id)
 	{
 		lit = litTexure->id;
@@ -699,14 +680,14 @@ void	OBJ_PlotModel(XPMPPlane_t *plane, float inDistance, double /*inX*/,
 	XPLMSetGraphicsState(1, (tex != 0) + (lit != 0), 1, 1, 1, 1, 1);
 	if (tex != 0)	XPLMBindTexture2d(tex, 0);
 	if (lit != 0)	XPLMBindTexture2d(lit, 1);
-	
+
 	if (tex) { glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); }
 	if (lit) { glActiveTextureARB(GL_TEXTURE1); glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD); glActiveTextureARB(GL_TEXTURE0); }
-	
+
 	if (obj->lods[lodIdx].dl == 0)
 	{
 		obj->lods[lodIdx].dl = glGenLists(1);
-		
+
 		GLint xpBuffer;
 		// See if the card even has VBO. If it does, save xplane's pointer
 		// and bind to 0 for us.
@@ -797,8 +778,9 @@ void	OBJ_DrawLights(XPMPPlane_t *plane, float inDistance, double inX, double inY
 	bool landLights = lights.landLights == 1;
 	bool taxiLights = lights.taxiLights == 1;
 
-	if (! plane->objHandle) { return; }
-	auto obj = plane->objHandle.get();
+	auto objHandle = std::atomic_load(&plane->objHandle);
+	if (!objHandle) { return; }
+	auto obj = objHandle.get();
 	int offset = lights.timeOffset;
 
 	// flash frequencies
@@ -864,7 +846,7 @@ void	OBJ_DrawLights(XPMPPlane_t *plane, float inDistance, double inX, double inY
 	// Where are we looking?
 	XPLMCameraPosition_t cameraPos;
 	XPLMReadCameraPosition(&cameraPos);
-	
+
 	// We can have 1 or more lights on each aircraft
 	for (size_t n = 0; n < obj->lods[lodIdx].lights.size(); n++)
 	{

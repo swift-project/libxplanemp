@@ -3,9 +3,10 @@
 
 #include <functional>
 #include <memory>
-#include <future>
-#include <chrono>
-#include <map>
+#include <thread>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 #include <assert.h>
 
 // ResourceManager is the central point to get texture and model resources.
@@ -19,62 +20,38 @@ class ResourceManager
 {
 public:
     using ResourceHandle = std::shared_ptr<T>;
-    using Future = std::future<ResourceHandle>;
+    using ResourceCache = std::unordered_map<std::string, std::weak_ptr<T>>;
+    using Callback = std::function<void(const ResourceHandle &)>;
 
-    using ResourceCache = std::map<std::string, std::weak_ptr<T>>;
-    using FutureCache = std::map<std::string, Future>;
+    ResourceManager(std::function<ResourceHandle(std::string)> factory) : m_factory(factory) {}
 
-    // Class for improved resurce loading: 
-    // Every frame, `get()` was being called, to check if loading finished yet.
-    // Every time `get()` was called, it performed at least one map lookup, which is an expensive operation to do every frame.
-    // This patch introduces a TransientState object that caches the map iterators from one call of `get()` to the next.
-    class TransientState
+    void loadAsync(const std::string &name, Callback callback)
     {
-        friend class ResourceManager;
-        typename ResourceCache::iterator m_resourceIt;
-        typename FutureCache::iterator m_futureIt;
-        bool m_searchedResource = false;
-        bool m_searchedFuture = false;
-    };
-
-    ResourceManager(std::function<Future(std::string)> factory) : m_factory(factory) {}
-
-    std::shared_ptr<T> get(const std::string &name, TransientState *state)
-    {
-        auto &resourceIt = state->m_resourceIt;
-        auto &futureIt = state->m_futureIt;
-
-        std::shared_ptr<T> resource;
-        if (!state->m_searchedResource) { resourceIt = m_resourceCache.find(name); state->m_searchedResource = true; }
-        if (resourceIt != m_resourceCache.end())
+        std::thread loaderThread ([ = ]
         {
-            resource = resourceIt->second.lock();
-        }
-        if (resource) { return resource; }
+            ResourceHandle resource;
+            std::lock_guard<std::mutex> lock(m_mutex);
+            auto resourceIt = m_resourceCache.find(name);
+            if (resourceIt != m_resourceCache.end())
+            {
+                resource = resourceIt->second.lock();
+            }
+            if (resource) { callback(resource); }
 
-        if (!state->m_searchedFuture) { futureIt = m_futureCache.find(name); state->m_searchedFuture = true; }
-        if (futureIt == m_futureCache.end())
-        {
-            futureIt = m_futureCache.emplace(name, m_factory(name)).first;
-        }
-        auto &future = futureIt->second;
-
-        assert(future.valid());
-        if (future.wait_for(std::chrono::duration<int>::zero()) != std::future_status::ready) // not yet finished loading
-        {
-            return nullptr;
-        }
-        resource = future.get();
-        m_futureCache.erase(name);
-        m_resourceCache[name] = resource;
-        *state = {};
-        return resource;
+            resource = m_factory(name);
+            callback(resource);
+        });
+        
+		if (loaderThread.joinable())
+		{
+			loaderThread.detach();
+		}
     }
 
 private:
-    std::function<Future(std::string)> m_factory;
+    std::function<ResourceHandle(std::string)> m_factory;
+    std::mutex m_mutex;
     ResourceCache m_resourceCache;
-    FutureCache m_futureCache;
 };
 
 #endif

@@ -252,14 +252,10 @@ struct	XPMPPlane_t {
 	OBJ7Handle                  objHandle;
 	TextureHandle               texHandle;
 	TextureHandle               texLitHandle;
-
-	ObjManager::TransientState      objState;
-	TextureManager::TransientState  texState;
-	TextureManager::TransientState  texLitState;
 };
 
 typedef	XPMPPlane_t *								XPMPPlanePtr;
-typedef	vector<std::unique_ptr<XPMPPlane_t>>		XPMPPlaneVector;
+typedef	vector<std::shared_ptr<XPMPPlane_t>>		XPMPPlaneVector;
 
 // Notifiers - clients can install callbacks and be told when a plane's
 // data changes.

@@ -109,7 +109,7 @@ using TextureHandle = TextureManager::ResourceHandle;
 bool	OBJ_Init(const char * inTexturePath);
 
 ObjManager::ResourceHandle OBJ_LoadModel(const std::string &inFilePath);
-ObjManager::Future OBJ_LoadModelAsync(const std::string &inFilePath);
+void OBJ_LoadModelAsync(const std::shared_ptr<XPMPPlane_t> &plane);
 
 // Get name of objects default model
 std::string OBJ_DefaultModel(const std::string &path);
@@ -129,7 +129,7 @@ void	OBJ_DrawLights(XPMPPlane_t *plane, float inDistance, double inX, double inY
 
 // Texture loading
 int		OBJ_LoadLightTexture(const std::string &inFilePath, bool inForceMaxTex);
-TextureManager::Future OBJ_LoadTexture(const std::string &path);
+TextureManager::ResourceHandle OBJ_LoadTexture(const std::string &path);
 int		OBJ_GetModelTexID(int model);
 
 std::string OBJ_GetLitTextureByTexture(const std::string &texturePath);

@@ -464,7 +464,7 @@ XPMPPlaneID		XPMPCreatePlane(
 		XPMPPlaneData_f			inDataFunc,
 		void *					inRefcon)
 {
-	auto plane = std::make_unique<XPMPPlane_t>();
+	auto plane = std::make_shared<XPMPPlane_t>();
 	plane->icao = inICAOCode;
 	plane->livery = inLivery;
 	plane->airline = inAirline;
@@ -476,7 +476,7 @@ XPMPPlaneID		XPMPCreatePlane(
 	plane->surface.size = sizeof(plane->surface);
 	plane->radar.size = sizeof(plane->radar);
 	plane->posAge = plane->radarAge = plane->surfaceAge = -1;
-	gPlanes.push_back(std::move(plane));
+	gPlanes.push_back(plane);
 	
 	XPMPPlanePtr planePtr = gPlanes.back().get();
 	for (XPMPPlaneNotifierVector::iterator iter = gObservers.begin(); iter !=
@@ -484,6 +484,12 @@ XPMPPlaneID		XPMPCreatePlane(
 	{
 		iter->first.first(planePtr, xpmp_PlaneNotification_Created, iter->first.second);
 	}
+
+	if (planePtr->model->plane_type == plane_Obj)
+	{
+		OBJ_LoadModelAsync(plane);
+	}
+
 	return planePtr;
 }
 
@@ -494,7 +500,7 @@ bool CompareCaseInsensitive(const string &a, const string &b)
 
 XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char *inICAOCode, const char *inAirline, const char *inLivery, XPMPPlaneData_f inDataFunc, void *inRefcon)
 {
-	auto plane = std::make_unique<XPMPPlane_t>();
+	auto plane = std::make_shared<XPMPPlane_t>();
 	plane->icao = inICAOCode;
 	plane->livery = inLivery;
 	plane->airline = inAirline;
@@ -524,13 +530,18 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 	plane->surface.size = sizeof(plane->surface);
 	plane->radar.size = sizeof(plane->radar);
 	plane->posAge = plane->radarAge = plane->surfaceAge = -1;
-	gPlanes.push_back(std::move(plane));
+	gPlanes.push_back(plane);
 
 	XPMPPlanePtr planePtr = gPlanes.back().get();
 	for (XPMPPlaneNotifierVector::iterator iter = gObservers.begin(); iter !=
 		 gObservers.end(); ++iter)
 	{
 		iter->first.first(planePtr, xpmp_PlaneNotification_Created, iter->first.second);
+	}
+
+	if (planePtr->model->plane_type == plane_Obj)
+	{
+		OBJ_LoadModelAsync(plane);
 	}
 	return planePtr;
 }
@@ -561,12 +572,9 @@ int	XPMPChangePlaneModel(
 	plane->model = CSL_MatchPlane(inICAOCode, inAirline, inLivery, &plane->match_quality, true);
 
 	// we're changing model, we must flush the resource handles so they get reloaded.
-	plane->objHandle = NULL;
-	plane->texHandle = NULL;
-	plane->texLitHandle = NULL;
-	plane->objState = {};
-	plane->texState = {};
-	plane->texLitState = {};
+	plane->objHandle = nullptr;
+	plane->texHandle = nullptr;
+	plane->texLitHandle = nullptr;
 
 	for (XPMPPlaneNotifierVector::iterator iter2 = gObservers.begin(); iter2 !=
 		 gObservers.end(); ++iter2)
