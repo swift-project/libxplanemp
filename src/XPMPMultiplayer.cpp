@@ -25,7 +25,6 @@
 #include "XPMPMultiplayerVars.h"
 #include "XPMPPlaneRenderer.h"
 #include "XPMPMultiplayerCSL.h"
-#include "XPMPMultiplayerCSLOffset.h"
 #include "XPLMUtilities.h"
 
 #include <algorithm>
@@ -100,26 +99,6 @@ static	int				XPMPControlPlaneCount(
 		XPLMDrawingPhase     inPhase,
 		int                  inIsBefore,
 		void *               inRefcon);
-
-void actualVertOffsetInfo(const char *inMtl, char *outType, double *outOffset) {
-	std::string type;
-	double offset;
-	cslVertOffsetCalc.actualVertOffsetInfo(inMtl, type, offset);
-	if(outType) {
-		std::strcpy(outType, type.c_str());
-	}
-	if (outOffset) {
-		*outOffset = offset;
-	}
-}
-
-void setUserVertOffset(const char *inMtlCode, double inOffset) {
-	cslVertOffsetCalc.setUserVertOffset(inMtlCode, inOffset);
-}
-
-void removeUserVertOffset(const char *inMtlCode) {
-	cslVertOffsetCalc.removeUserVertOffset(inMtlCode);
-}
 
 #ifdef DEBUG_GL
 static void xpmpKhrDebugProc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *param)
@@ -264,10 +243,8 @@ const char *    XPMPMultiplayerOBJ7SupportEnable(const char * inTexturePath) {
 	else         return "";
 }
 
-const char * 	XPMPMultiplayerInit(
-		int (* inIntPrefsFunc)(const char *, const char *, int),
-		float (* inFloatPrefsFunc)(const char *, const char *, float),
-		const char * resourceDir)
+const char * 	XPMPMultiplayerInit(int (* inIntPrefsFunc)(const char *, const char *, int),
+		float (* inFloatPrefsFunc)(const char *, const char *, float))
 {
 	gIntPrefsFunc = inIntPrefsFunc;
 	gFloatPrefsFunc = inFloatPrefsFunc;
@@ -276,8 +253,6 @@ const char * 	XPMPMultiplayerInit(
 	//char	line[256];
 	//char	sysPath[1024];
 	//FILE *	fi;
-
-	cslVertOffsetCalc.setResourcesDir(resourceDir);
 	
 	bool	problem = false;
 
@@ -809,7 +784,27 @@ void		XPMPDumpOneCycle(void)
 
 void XPMPGetVerticalOffset(XPMPPlaneID inPlane, double *outOffset)
 {
+	*outOffset = 0.0;
 	XPMPPlanePtr plane = XPMPPlaneFromID(inPlane);
 	if (!plane->model) { return; }
-	*outOffset = plane->model->actualVertOffset;
+
+	if (plane->model->isXsbVertOffsetAvail)
+	{
+		*outOffset = plane->model->xsbVertOffset;
+		return;
+	}
+
+	if (plane->model->plane_type == plane_Obj)
+	{
+		auto handle = std::atomic_load(&plane->objHandle);
+		if (! handle) { return; }
+		*outOffset = handle->calcVertOffset;
+		return;
+	}
+
+	if (plane->model->plane_type == plane_Obj8)
+	{
+		// OBJ8 model always have 0.0 offset per spec
+		*outOffset = 0.0;
+	}
 }

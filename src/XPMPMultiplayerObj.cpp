@@ -21,6 +21,8 @@
  *
  */
 
+#define NOMINMAX
+
 #include "XPMPMultiplayerObj.h"
 #include "XPMPMultiplayerVars.h"
 
@@ -35,6 +37,7 @@
 #include <cstdio>
 #include <queue>
 #include <fstream>
+#include <algorithm>
 
 #include "XPLMGraphics.h"
 #include "XPLMUtilities.h"
@@ -403,6 +406,9 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 
 	// Go through all of the commands for this object and filter out the polys
 	// and the lights.
+
+	float minY = 0.0;
+	float maxY = 0.0;
 	for (const auto &cmd : objInfo.obj.cmds)
 	{
 		switch(cmd.cmdType) {
@@ -451,6 +457,9 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 				st[1]  = cmd.st[n].st[1];
 				index = objInfo.lods.back().pointPool.AddPoint(xyz, st);
 				indexes.push_back(index);
+
+				minY = std::min(minY, xyz[1]);
+				maxY = std::max(maxY, xyz[1]);
 			}
 
 			switch(cmd.cmdID) {
@@ -501,6 +510,15 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 		}
 			break;
 		}
+	}
+
+	if (minY < 0.0)
+	{
+		objInfo.calcVertOffset = std::fabs(minY);
+	}
+	else
+	{
+		objInfo.calcVertOffset = -maxY;
 	}
 
 	// Calculate our normals for all LOD's

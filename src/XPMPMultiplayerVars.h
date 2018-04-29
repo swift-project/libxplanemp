@@ -149,35 +149,9 @@ struct	CSLPlane_t {
 
 	// plane_Obj8
 	vector<obj_for_acf>			attachments;
-	
-	/* distance between the origin point of an object and the lowest point of the object 
-	 * (usually a bottom point of the gears) along the vertical axis (y axis in the sim) 
-	 * for onground clamping purposes.
-	 *
-	 * in simple words, correct vert offset for accurate putting planes on the ground.
-	 * (in meters)
-	 */
-	 
-	// actual vert offset
-	eVertOffsetType actualVertOffsetType = eVertOffsetType::none;
-	eVertOffsetType prevActualVertOffsetType = eVertOffsetType::none;
-	double actualVertOffset = 0.0;//meters
-	// local user's vert offset
-	bool isUserVertOffsetUpToDate = false;
-	bool isUserVertOffsetAvail = false;
-	double userVertOffset = 0.0;
-	// vert offset from xsb file
-	bool isXsbVertOffsetUpToDate = false;
+
 	bool isXsbVertOffsetAvail = false;
 	double xsbVertOffset = 0.0;
-	// vert offset from mtl file
-	bool isMtlVertOffsetUpToDate = false;
-	bool isMtlVertOffsetAvail = false;
-	double mtlVertOffset = 0.0;
-	// calculated vert offset
-	bool isCalcVertOffsetUpToDate = false;
-	bool isCalcVertOffsetAvail = false;
-	double calcVertOffset = 0.0;
 };
 
 // These enums define the eight levels of matching we might possibly

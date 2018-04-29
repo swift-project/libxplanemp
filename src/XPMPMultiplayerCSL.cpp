@@ -22,7 +22,6 @@
  */
 
 #include "XPMPMultiplayerCSL.h"
-#include "XPMPMultiplayerCSLOffset.h"
 #include "XPLMUtilities.h"
 #include "XPMPMultiplayerObj.h"
 #include "XStringUtils.h"

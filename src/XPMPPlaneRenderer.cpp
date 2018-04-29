@@ -24,7 +24,6 @@
 #include "XPMPPlaneRenderer.h"
 #include "XPMPMultiplayer.h"
 #include "XPMPMultiplayerCSL.h"
-#include "XPMPMultiplayerCSLOffset.h"
 #include "XPMPMultiplayerVars.h"
 #include "XPMPMultiplayerObj.h"
 #include "XPMPMultiplayerObj8.h"
@@ -500,11 +499,12 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 
 			if (iter->second.plane->model)
 			{
+				// Fixme:
 				//find or update the actual vert offset in the csl model data
-				cslVertOffsetCalc.findOrUpdateActualVertOffset(*iter->second.plane->model);
-				//correct y value by real terrain elevation
-				const bool isClampingOn = gIntPrefsFunc("PREFERENCES", "CLAMPING", 0);
-				iter->second.y = static_cast<float>(getCorrectYValue(iter->second.x, iter->second.y, iter->second.z, iter->second.plane->model->actualVertOffset, isClampingOn));
+				// cslVertOffsetCalc.findOrUpdateActualVertOffset(*iter->second.plane->model);
+				// correct y value by real terrain elevation
+				// const bool isClampingOn = gIntPrefsFunc("PREFERENCES", "CLAMPING", 0);
+				// iter->second.y = static_cast<float>(getCorrectYValue(iter->second.x, iter->second.y, iter->second.z, iter->second.plane->model->actualVertOffset, isClampingOn));
 				if (iter->second.plane->model->plane_type == plane_Austin)
 				{
 					planes_austin.insert(multimap<int, PlaneToRender_t *>::value_type(CSL_GetOGLIndex(iter->second.plane->model), &iter->second));

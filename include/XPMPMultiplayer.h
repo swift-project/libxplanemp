@@ -217,15 +217,6 @@ typedef	int			XPMPPlaneCallbackResult;
 typedef	void *		XPMPPlaneID;
 
 /************************************************************************************
-* Some additional functional by den_rain
-************************************************************************************/
-
-void actualVertOffsetInfo(const char *inMtl, char *outType, double *outOffset);
-void setUserVertOffset(const char *inMtlCode, double inOffset);
-void removeUserVertOffset(const char *inMtlCode);
-
-
-/************************************************************************************
  * PLANE CREATION API
  ************************************************************************************/
 
@@ -307,8 +298,7 @@ const char *	XPMPMultiplayerInitLegacyData(
  */
 const char *    XPMPMultiplayerInit(
 		int (* inIntPrefsFunc)(const char *, const char *, int),
-		float (* inFloatPrefsFunc)(const char *, const char *, float),
-		const char * resourceDir);
+		float (* inFloatPrefsFunc)(const char *, const char *, float));
 
 /*
  * XPMPMultiplayerEnable

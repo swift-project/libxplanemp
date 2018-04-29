@@ -32,6 +32,7 @@
 #include "TexUtils.h"
 
 #include <memory>
+#include <cmath>
 
 #define MAX_SPARE_TEXHANDLES	4
 #define SPARE_TEXHANDLES_DECAY_FRAMES	120
@@ -92,6 +93,7 @@ struct	ObjInfo_t {
 	XObj					obj;
 	vector<LODObjInfo_t>	lods;
 	LoadStatus loadStatus;
+	double calcVertOffset = 0.0; // meters
 };
 using ObjManager = ResourceManager<ObjInfo_t>;
 using OBJ7Handle = ObjManager::ResourceHandle;
