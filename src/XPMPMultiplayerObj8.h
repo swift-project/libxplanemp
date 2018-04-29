@@ -28,6 +28,10 @@
 #include "XPLMPlanes.h"
 #include "XPMPMultiplayer.h"
 #include <string>
+#include <memory>
+#include <unordered_map>
+#include <vector>
+#include <functional>
 
 /*
 
@@ -55,8 +59,15 @@ enum obj_load_state {
 	load_failed			// (a)sync load failed
 };
 
+// Thin wrapper around XPLMObjectRef (which is just a void *)
+struct Obj8Ref_t
+{
+    XPLMObjectRef objectRef;
+};
+
 struct	obj_for_acf {
-	std::string			file;
+	std::string			sourceFile;
+	std::string			clonedFile;
 	XPLMObjectRef		handle;
 	obj_draw_type		draw_type;
 	obj_load_state		load_state;
@@ -65,38 +76,59 @@ struct	obj_for_acf {
 	std::string			litTextureFile;
 };
 
-struct	CSLPlane_t;
+class Obj8Manager
+{
+public:
+	using ResourceHandle = std::shared_ptr<Obj8Ref_t>;
+	using ResourceCache = std::unordered_map<std::string, std::weak_ptr<Obj8Ref_t>>;
+	using ResourceCallback = std::function<void(const ResourceHandle &)>;
+
+	Obj8Manager() = default;
+
+	void loadAsync(obj_for_acf &objForAcf, const std::string &mtl, ResourceCallback callback);
+
+private:
+	struct XPLMCallbackRef
+	{
+		XPLMCallbackRef(Obj8Manager *manager, const std::string &filename)
+			: m_manager(manager), m_filename(filename)
+		{}
+
+		Obj8Manager *m_manager = nullptr;
+		std::string m_filename;
+	};
+
+	void xplmLoadAsync(const std::string &fileName, ResourceCallback callback);
+	void objectLoaded(const std::string &fileName, XPLMObjectRef objectRef);
+	static void Obj8RefDeleter(Obj8Ref_t *ref);
+
+	ResourceCache m_resourceCache;
+	std::unordered_map<std::string, std::vector<ResourceCallback>> m_pendingCallbacks;
+};
+
+using OBJ8Handle = Obj8Manager::ResourceHandle;
 
 void	obj_init();
+
+struct CSLPlane_t;
+struct XPMPPlane_t;
+
+void OBJ_LoadObj8Async(const std::shared_ptr<XPMPPlane_t> &plane);
+OBJ8Handle OBJ_LoadObj8Model(const std::string &inFilePath);
+
+void OBJ8_DrawModel(
+    XPMPPlane_t *plane,
+    double inX,
+    double inY,
+    double inZ,
+    double inPitch,
+    double inRoll,
+    double inHeading,
+    xpmp_LightStatus lights,
+    XPLMPlaneDrawState_t *state,
+    bool blend);
+
+
 void	obj_deinit();
-
-bool	obj_load_one_attached_obj(
-		const char *		file_name,
-		bool				needs_anim,
-		obj_draw_type		draw_type,
-		obj_for_acf&		out_attachment);
-
-/////
-
-
-void	obj_schedule_one_aircraft(
-		CSLPlane_t *			model,
-		double 					x,
-		double 					y,
-		double 					z,
-		double 					pitch,
-		double 					roll,
-		double 					heading,
-		int	   					full,		//
-		xpmp_LightStatus		lights,
-		XPLMPlaneDrawState_t *	state);
-
-
-void	obj_draw_solid();
-void	obj_draw_translucent();
-void	obj_draw_done();
-
-
-
 
 #endif

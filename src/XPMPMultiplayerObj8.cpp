@@ -23,6 +23,7 @@
 
 #include "XPMPMultiplayerObj8.h"
 #include "XPMPMultiplayerVars.h"
+#include "XStringUtils.h"
 #include "XPLMScenery.h"
 #include "XPLMUtilities.h"
 #include "XPLMDataAccess.h"
@@ -31,28 +32,19 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
+#include <thread>
+
 using namespace std;
 
+bool cloneObj8WithDifferentTexture(const std::string &sourceFileName, const std::string &targetFileName, const std::string &textureFile, const std::string &litTextureFile);
+
+static Obj8Manager gObj8Manager;
+
 struct	one_inst {
-	one_inst * next;
-	
 	XPLMDrawInfo_t			location;
 	xpmp_LightStatus		lights;
 	XPLMPlaneDrawState_t *	state;
-	
-	~one_inst() { delete next; }
 };
-
-struct	one_obj {
-	one_obj *			next;
-	obj_for_acf *		model;
-	one_inst *			head;
-	
-	~one_obj() { delete head; delete next; }
-};
-
-static	one_obj *	s_worklist = NULL;
-
 
 static one_inst *	s_cur_plane = NULL;
 
@@ -143,7 +135,162 @@ int obj_get_float_array(
 	return inCount;
 }
 
-bool obj8_load_async = true;
+static bool obj8_load_async = true;
+
+void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, ResourceCallback callback)
+{
+	std::string fileNameToLoad = objForAcf.sourceFile;
+
+	if (objForAcf.draw_type == draw_solid)
+	{
+		if (objForAcf.clonedFile.empty())
+		{
+			// generate the name for new object
+			std::string destObjFile = objForAcf.sourceFile;
+			string::size_type pos = destObjFile.find_last_of(".");
+			std::string suffix = "_" + mtl;
+			if (pos != string::npos)
+			{
+				destObjFile.insert(pos, suffix);
+			}
+			else
+			{
+				destObjFile += suffix;
+			}
+			objForAcf.clonedFile = destObjFile;
+		}
+
+		fileNameToLoad = objForAcf.clonedFile;
+	}
+
+	std::string sourceObjFile = objForAcf.sourceFile;
+	std::string destObjFile = objForAcf.clonedFile;
+
+	ResourceHandle resource;
+
+	// Is the resource fully loaded already?
+	// If yes, simply return the shared handle
+	auto resourceIt = m_resourceCache.find(fileNameToLoad);
+	if (resourceIt != m_resourceCache.end())
+	{
+		resource = resourceIt->second.lock();
+	}
+
+	if (resource)
+	{
+		callback(resource);
+		return;
+	}
+
+	// Is the resource currently being loaded?
+	// If yes, attach our callback to be called when finished.
+	auto pendingCallbacksIt = m_pendingCallbacks.find(fileNameToLoad);
+	if (pendingCallbacksIt != m_pendingCallbacks.end())
+	{
+		pendingCallbacksIt->second.push_back(callback);
+		return;
+	}
+
+	std::thread loaderThread([=]
+	{
+		if (objForAcf.draw_type == draw_solid)
+		{
+			cloneObj8WithDifferentTexture(sourceObjFile, destObjFile, objForAcf.textureFile, objForAcf.litTextureFile);
+			gThreadSynchronizer.queueCall([=]()
+			{
+				XPLMDebugString(XPMP_CLIENT_NAME ": Cloning finished ");
+				XPLMDebugString("(");
+				XPLMDebugString(fileNameToLoad.c_str());
+				XPLMDebugString(")\n");
+
+                auto extendedCallback = [=](const Obj8Manager::ResourceHandle &resourceHandle)
+                {
+                    callback(resourceHandle);
+                    char xsystem[1024];
+                    XPLMGetSystemPath(xsystem);
+                    std::string fullPath = std::string(xsystem) + destObjFile;
+                    int res = std::remove(fullPath.c_str());
+                    if (res)
+                    {
+                        XPLMDebugString(std::string(XPMP_CLIENT_NAME" Warning: Can't delete temporary created obj8 file. The file: " + fullPath + "\n").c_str());
+                    }
+                };
+
+                xplmLoadAsync(fileNameToLoad, extendedCallback);
+			});
+		}
+		else
+		{
+			gThreadSynchronizer.queueCall([=]()
+			{
+				XPLMDebugString(XPMP_CLIENT_NAME ": Started async loading ");
+				XPLMDebugString("(");
+				XPLMDebugString(fileNameToLoad.c_str());
+				XPLMDebugString(")\n");
+				xplmLoadAsync(fileNameToLoad, callback);
+			});
+		}
+	});
+	if (loaderThread.joinable())
+	{
+		loaderThread.detach();
+	}
+}
+
+void Obj8Manager::xplmLoadAsync(const std::string &fileName, ResourceCallback callback)
+{
+	m_pendingCallbacks[fileName].push_back(callback);
+
+	std::unique_ptr<XPLMCallbackRef> callbackRef = std::make_unique<XPLMCallbackRef>(this, fileName);
+	XPLMLoadObjectAsync(fileName.c_str(), [](XPLMObjectRef objectRef, void *refcon)
+	{
+		std::unique_ptr<XPLMCallbackRef> callbackRef(static_cast<XPLMCallbackRef *>(refcon));
+		callbackRef->m_manager->objectLoaded(callbackRef->m_filename, objectRef);
+	}, callbackRef.get());
+	callbackRef.release();
+}
+
+void Obj8Manager::objectLoaded(const std::string &fileName, XPLMObjectRef objectRef)
+{
+	Obj8Ref_t obj8Ref;
+	obj8Ref.objectRef = objectRef;
+
+	if (objectRef)
+	{
+		ResourceHandle handle(new Obj8Ref_t(obj8Ref), Obj8RefDeleter);
+		m_resourceCache[fileName] = handle;
+
+		XPLMDebugString(XPMP_CLIENT_NAME ": Async loading succeeded ");
+		XPLMDebugString("(");
+		XPLMDebugString(fileName.c_str());
+		XPLMDebugString(")\n");
+
+		auto callbacksIt = m_pendingCallbacks.find(fileName);
+		if (callbacksIt != m_pendingCallbacks.end())
+		{
+			for (auto &callback : callbacksIt->second)
+			{
+				callback(handle);
+			}
+			m_pendingCallbacks.erase(callbacksIt);
+		}
+	}
+	else
+	{
+		XPLMDebugString(XPMP_CLIENT_NAME ": Async loading failed ");
+		XPLMDebugString("(");
+		XPLMDebugString(fileName.c_str());
+		XPLMDebugString(")\n");
+
+		m_pendingCallbacks.erase(fileName);
+	}
+}
+
+void Obj8Manager::Obj8RefDeleter(Obj8Ref_t *ref)
+{
+	XPLMUnloadObject(ref->objectRef);
+	delete ref;
+}
 
 void	obj_init()
 {
@@ -172,231 +319,147 @@ void	obj_init()
 	}
 }
 
-static std::set<std::string> gCopyiedObj8Cache;
 
-void obj_deinit() {
-	for (const auto &fileName : gCopyiedObj8Cache) {
-		char xsystem[1024];
-		XPLMGetSystemPath(xsystem);
-		std::string fullPath = std::string(xsystem) + fileName;
-		int res = std::remove(fullPath.c_str());
-		if (res) {
-			XPLMDebugString(std::string(XPMP_CLIENT_NAME" Warning: Can't delete temporary created obj8 file. The file: " + fullPath + "\n").c_str());
-		}
-	}
+void obj_deinit()
+{
 }
 
-
-static void		draw_objects_for_mode(one_obj * who, int want_translucent)
+bool cloneObj8WithDifferentTexture(const std::string &sourceFileName, const std::string &targetFileName, const std::string &textureFile, const std::string &litTextureFile)
 {
-	while(who)
-	{
-		obj_draw_type dt = who->model->draw_type;
-		if((want_translucent && dt == draw_glass) ||
-				(!want_translucent && dt != draw_glass))
-		{
-			static XPLMDataRef night_lighting_ref = XPLMFindDataRef("sim/graphics/scenery/percent_lights_on");
-			bool use_night = XPLMGetDataf(night_lighting_ref) > 0.25;
-
-			for (one_inst * i = who->head; i; i = i->next)
-			{
-				s_cur_plane = i;
-				// TODO: set obj sate to state datarefs(dref_names) from "one_inst".
-				XPLMDrawObjects(who->model->handle, 1, &i->location, use_night, 0);
-			}
-		}
-		who = who->next;
-	}
-	s_cur_plane = NULL;
-}
-
-void obj_loaded_cb(XPLMObjectRef obj, void * refcon)
-{
-	obj_for_acf *model = reinterpret_cast<obj_for_acf *>(refcon);
-	if (obj != NULL) {
-		model->load_state = load_loaded;
-		model->handle = obj;
-#ifdef DEBUG
-		XPLMDebugString(XPMP_CLIENT_NAME": Notified Successful Async Load of OBJ8: ");
-		XPLMDebugString(model->file.c_str());
-		XPLMDebugString("\n");
-#endif
-	} else {
-		model->load_state = load_failed;
-#ifdef DEBUG
-		XPLMDebugString(XPMP_CLIENT_NAME": Notified Failed Async Load of OBJ8: ");
-		XPLMDebugString(model->file.c_str());
-		XPLMDebugString("\n");
-#endif
-	}
-} 
-
-void prepareObj8ForUsingWithAnotherTexture(CSLPlane_t * model, obj_for_acf * obj8) {
-	// generate the name for new object
-	std::string destObjFile = obj8->file;
-	string::size_type pos2 = destObjFile.find_last_of(".");
-	std::string suffix = "_" + model->getMtlCode();
-	if (pos2 != string::npos) {
-		destObjFile.insert(pos2, suffix);
-	}
-	else {
-		destObjFile += suffix;
-	}
-
-	// trying to find an object in cache
-	const auto &findRes = gCopyiedObj8Cache.find(destObjFile);
-	if (findRes != gCopyiedObj8Cache.end()) {
-		obj8->file = destObjFile;
-		XPLMDebugString(std::string(XPMP_CLIENT_NAME": Modified obj8 has been found in the cache: " + obj8->file + "\n").c_str());
-		return;
-	}
 	// copy and edit new object
-	if (!obj8->textureFile.empty()) {
-		std::ifstream srcObj(obj8->file.c_str(), std::ios_base::in);
-		if (!srcObj.is_open()) {
-			XPLMDebugString(std::string(XPMP_CLIENT_NAME" Warning: Can't open the source obj8 file during copying and modifying: " + obj8->file + "\n").c_str());
-			return;
+	if (!textureFile.empty())
+	{
+		std::string srcObjContent = getFileContent(sourceFileName);
+		if (srcObjContent.empty())
+		{
+			XPLMDebugString(std::string(XPMP_CLIENT_NAME" Warning: Could not open " + sourceFileName + " for cloning.\n").c_str());
+			return false;
 		}
 
-		std::ofstream destObj(destObjFile, std::ios_base::out);
-		if (!srcObj.is_open()) {
-			XPLMDebugString(std::string(XPMP_CLIENT_NAME" Warning: Can't open the destination obj8 file during copying and modifying: " + destObjFile + "\n").c_str());
-			return;
-		}
 		bool textureHasWritten = false;
 		bool litTextureHasWritten = false;
-		while (srcObj.good()) {
-			std::string line;
-			std::getline(srcObj, line);
-			if (!textureHasWritten || !litTextureHasWritten) {
-				std::string trimmedLine = xmp::trim(line);
-				std::vector<std::string> tokens;
-				tokens = xmp::explode(trimmedLine);
-				if (tokens.size() >= 2 && xmp::trim(tokens[0]) == "TEXTURE") {
-					std::ostringstream os;
-					os << "TEXTURE " << obj8->textureFile;
-					line = os.str();
+		std::istringstream sin(srcObjContent);
+		std::ostringstream sout;
+		std::string line;
+		while (std::getline(sin, line))
+		{
+			if (line.size() == 0 || line.at(0) == ';' || line.at(0) == '#' || line.at(0) == '/')
+			{
+				sout << line << std::endl;
+				continue;
+			}
+
+			trim(line);
+			std::vector<std::string> tokens = tokenize(line);
+			if (!textureHasWritten || !litTextureHasWritten)
+			{
+				if (tokens.size() >= 2 && tokens[0] == "TEXTURE")
+				{
+					sout << "TEXTURE " << textureFile << std::endl;
 					textureHasWritten = true;
+					continue;
 				}
-				if (tokens.size() >= 2 && xmp::trim(tokens[0]) == "TEXTURE_LIT") {
-					std::ostringstream os;
-					os << "TEXTURE_LIT " << obj8->litTextureFile;
-					line = os.str();
+				if (tokens.size() >= 2 && tokens[0] == "TEXTURE_LIT")
+				{
+					sout << "TEXTURE_LIT " << litTextureFile << std::endl;
 					litTextureHasWritten = true;
+					continue;
 				}
 				if (tokens.size() >= 2
-					&& (xmp::trim(tokens[0]) == "VT"
-						|| xmp::trim(tokens[0]) == "VLINE"
-						|| xmp::trim(tokens[0]) == "VLIGHT"
-						|| xmp::trim(tokens[0]) == "IDX"
-						|| xmp::trim(tokens[0]) == "IDX10")
-					) {
-
-					if (!textureHasWritten) {
-						std::ostringstream os;
-						os << "TEXTURE " << obj8->textureFile;
-						destObj << os.str() << std::endl;
+					&& (tokens[0] == "VT"
+						|| tokens[0] == "VLINE"
+						|| tokens[0] == "VLIGHT"
+						|| tokens[0] == "IDX"
+						|| tokens[0] == "IDX10")
+					)
+				{
+					if (!textureHasWritten)
+					{
+						sout << "TEXTURE " << textureFile << std::endl;
 						textureHasWritten = true;
+						continue;
 					}
-					if (!litTextureHasWritten) {
-						std::ostringstream os;
-						os << "TEXTURE_LIT " << obj8->litTextureFile;
-						destObj << os.str() << std::endl;
+					if (!litTextureHasWritten)
+					{
+						sout << "TEXTURE_LIT " << litTextureFile << std::endl;
 						litTextureHasWritten = true;
+						continue;
 					}
 				}
 			}
-			destObj << line << std::endl;
+			sout << line << std::endl;
 		}
-		obj8->file = destObjFile;
-		gCopyiedObj8Cache.emplace(destObjFile);
-		XPLMDebugString(std::string(XPMP_CLIENT_NAME": Modified obj8 has been created at: " + obj8->file + "\n").c_str());
+		writeFileContent(targetFileName, sout.str());
+		XPLMDebugString(std::string(XPMP_CLIENT_NAME": Modified obj8 has been created at: " + targetFileName + "\n").c_str());
 	}
+	return true;
 }
 
-
-void	obj_schedule_one_aircraft(
-		CSLPlane_t *			model,
-		double 					x,
-		double 					y,
-		double 					z,
-		double 					pitch,
-		double 					roll,
-		double 					heading,
-		int	   					/*full*/,		//
-		xpmp_LightStatus		lights,
-		XPLMPlaneDrawState_t *	state)
+void OBJ_LoadObj8Async(const std::shared_ptr<XPMPPlane_t> &plane)
 {
-	one_obj * iter;
-	
-	for(auto att = model->attachments.begin(); att != model->attachments.end(); ++att)
+	for (auto &attachment : plane->model->attachments)
 	{
-		obj_for_acf * obj8 = &*att;
+		Obj8Info_t obj8Info;
+		obj8Info.index = plane->obj8Handles.size();
+		obj8Info.drawType = attachment.draw_type;
+		plane->obj8Handles[obj8Info] = nullptr;
 
-		if(obj8->handle == NULL && obj8->load_state == load_none && !obj8->file.empty()) {
-#ifdef DEBUG
-			XPLMDebugString(XPMP_CLIENT_NAME ": Loading Model ");
-			XPLMDebugString(model->file.c_str());
-			XPLMDebugString("\n");
-#endif			
-			prepareObj8ForUsingWithAnotherTexture(model, obj8);
-			if(obj8_load_async) {
-				XPLMLoadObjectAsync(obj8->file.c_str(),obj_loaded_cb,reinterpret_cast<void *>(obj8));
-				obj8->load_state = load_loading;
-			} else {
-				obj8->handle = XPLMLoadObject(obj8->file.c_str());
-				if (obj8->handle != NULL) {
-					obj8->load_state = load_loaded;
-				} else {
-					obj8->load_state = load_failed;
+		gObj8Manager.loadAsync(attachment, plane->model->getMtlCode(), [plane, obj8Info](const Obj8Manager::ResourceHandle &resourceHandle)
+		{
+			for (auto &obj8handle : plane->obj8Handles)
+			{
+				if (obj8handle.first.index == obj8Info.index)
+				{
+					std::atomic_store(&obj8handle.second, resourceHandle);
+					return;
 				}
 			}
-		}
-
-
-		for(iter = s_worklist; iter; iter = iter->next)
-		{
-			if(iter->model == obj8)
-				break;
-		}
-		if(iter == NULL)
-		{
-			iter = new one_obj;
-			iter->next = s_worklist;
-			s_worklist = iter;
-			iter->model = obj8;
-			iter->head = NULL;
-		}
-		
-		if(iter->model->load_state == load_loaded) {
-			one_inst * i = new one_inst;
-			i->next = iter->head;
-			iter->head = i;
-			i->lights = lights;
-			i->state = state;
-			i->location.structSize = sizeof(i->location);
-			i->location.x = static_cast<float>(x);
-			i->location.y = static_cast<float>(y);
-			i->location.z = static_cast<float>(z);
-			i->location.pitch = static_cast<float>(pitch);
-			i->location.roll = static_cast<float>(roll);
-			i->location.heading = static_cast<float>(heading);
-		}
+		});
 	}
 }
 
-void	obj_draw_solid()
+void OBJ8_DrawModel(XPMPPlane_t *plane, double inX, double inY, double inZ, double inPitch, double inRoll, double inHeading, xpmp_LightStatus lights, XPLMPlaneDrawState_t *state, bool blend)
 {
-	draw_objects_for_mode(s_worklist, false);
-}
+	for (auto &pair : plane->obj8Handles)
+	{
+		auto obj8Handle = std::atomic_load(&pair.second);
+		if (!obj8Handle) { return; }
+	}
 
-void	obj_draw_translucent()
-{
-	draw_objects_for_mode(s_worklist, true);
-}
+	static XPLMDataRef night_lighting_ref = XPLMFindDataRef("sim/graphics/scenery/percent_lights_on");
+	bool use_night = XPLMGetDataf(night_lighting_ref) > 0.25;
 
-void	obj_draw_done()
-{
-	delete s_worklist;
-	s_worklist = NULL;
+	XPLMDrawInfo_t drawInfo;
+
+	drawInfo.structSize = sizeof(drawInfo);
+	drawInfo.x = static_cast<float>(inX);
+	drawInfo.y = static_cast<float>(inY);
+	drawInfo.z = static_cast<float>(inZ);
+	drawInfo.pitch = static_cast<float>(inPitch);
+	drawInfo.roll = static_cast<float>(inRoll);
+	drawInfo.heading = static_cast<float>(inHeading);
+
+	one_inst i;
+	i.location = drawInfo;
+	i.lights = lights;
+	i.state = state;
+
+	s_cur_plane = &i;
+
+	for (const auto &pair : plane->obj8Handles)
+	{
+		auto obj8Handle = std::atomic_load(&pair.second);
+		if (pair.first.drawType == draw_glass && blend)
+		{
+			// Draw transluent
+			XPLMDrawObjects(obj8Handle->objectRef, 1, &drawInfo, use_night, 0);
+		}
+		else
+		{
+			// Draw solid
+			XPLMDrawObjects(obj8Handle->objectRef, 1, &drawInfo, use_night, 0);
+		}
+	}
+
+	s_cur_plane = nullptr;
 }

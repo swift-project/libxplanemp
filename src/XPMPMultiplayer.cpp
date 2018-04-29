@@ -294,6 +294,8 @@ const char * 	XPMPMultiplayerInit(
 	XPLMRegisterDrawCallback(XPMPRenderMultiplayerPlanes,
 							 xplm_Phase_Airplanes, 0, /* after*/ 0 /* refcon */);
 
+	XPLMRegisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, -1, &gThreadSynchronizer);
+
 	if (problem)		return "There were problems initializing " XPMP_CLIENT_LONGNAME ".  Please examine X-Plane's error.out file for detailed information.";
 	else 				return "";
 }
@@ -303,6 +305,7 @@ void XPMPMultiplayerCleanup(void)
 	XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Gauges, 0, 0);
 	XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Gauges, 1, (void *) -1);
 	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, 0);
+	XPLMUnregisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, &gThreadSynchronizer);
 	XPMPDeinitDefaultPlaneRenderer();
 	CSL_DeInit();
 	OGLDEBUG(glDebugMessageCallback(NULL, NULL));
@@ -489,6 +492,10 @@ XPMPPlaneID		XPMPCreatePlane(
 	{
 		OBJ_LoadModelAsync(plane);
 	}
+	else if (planePtr->model->plane_type == plane_Obj8)
+	{
+		OBJ_LoadObj8Async(plane);
+	}
 
 	return planePtr;
 }
@@ -542,6 +549,10 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 	if (planePtr->model->plane_type == plane_Obj)
 	{
 		OBJ_LoadModelAsync(plane);
+	}
+	else if (planePtr->model->plane_type == plane_Obj8)
+	{
+		OBJ_LoadObj8Async(plane);
 	}
 	return planePtr;
 }

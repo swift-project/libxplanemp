@@ -579,7 +579,7 @@ bool ParseObj8Command(const std::vector<std::string> &tokens, CSLPackage_t &pack
 	}
 
 	att.handle = NULL;
-	att.file = absolutePath;
+	att.sourceFile = absolutePath;
 
 	if (tokens.size() >= 5)
 	{
@@ -1318,7 +1318,7 @@ void			CSL_DrawObject(
 		XPLMPlaneDrawState_t *	state)
 {
 	// Setup OpenGL for this plane render
-	if(type != plane_Obj8)
+	if(type != plane_Obj8 && type != plane_Obj8_Transparent)
 	{
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
@@ -1351,23 +1351,17 @@ void			CSL_DrawObject(
 	case plane_Lights:
 		OBJ_DrawLights(plane, distance,
 					   x, y ,z, pitch, roll, heading, lights);
-
 		break;
+
 	case plane_Obj8:
-		obj_schedule_one_aircraft(
-					model,
-					x,
-					y,
-					z,
-					pitch,
-					roll,
-					heading,
-					full,		//
-					lights,
-					state);
+		OBJ8_DrawModel(plane, x, y, z, pitch, roll, heading, lights, state, false);
+		break;
+
+	case plane_Obj8_Transparent:
+		OBJ8_DrawModel(plane, x, y, z, pitch, roll, heading, lights, state, true);
 		break;
 	}
 
-	if(type != plane_Obj8)
+	if(type != plane_Obj8 && type != plane_Obj8_Transparent)
 		glPopMatrix();
 }

@@ -39,3 +39,30 @@ map<string, string>				gGroupings;
 
 string							gDefaultPlane;
 map<string, CSLAircraftCode_t>	gAircraftCodes;
+ThreadSynchronizer				gThreadSynchronizer;
+
+void ThreadSynchronizer::queueCall(std::function<void()> func)
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	m_qeuedCalls.push_back(func);
+}
+
+void ThreadSynchronizer::executeQueuedCalls()
+{
+	if (m_mutex.try_lock())
+	{
+		while (m_qeuedCalls.size() > 0)
+		{
+			m_qeuedCalls.front()();
+			m_qeuedCalls.pop_front();
+		}
+		m_mutex.unlock();
+	}
+}
+
+float ThreadSynchronizer::flightLoopCallback(float, float, int, void *refcon)
+{
+	auto *obj = static_cast<ThreadSynchronizer *>(refcon);
+	obj->executeQueuedCalls();
+	return -1;
+}

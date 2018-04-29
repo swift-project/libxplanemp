@@ -35,6 +35,8 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <deque>
+#include <mutex>
 
 #include "XObjDefs.h"
 
@@ -72,6 +74,7 @@ enum {
 	plane_Obj,
 	plane_Lights,
 	plane_Obj8,
+	plane_Obj8_Transparent,
 	plane_Count
 };
 
@@ -225,6 +228,17 @@ extern map<string, CSLAircraftCode_t>	gAircraftCodes;
 
 /**************** PLANE OBJECTS ********************/
 
+struct Obj8Info_t
+{
+    size_t index;
+	obj_draw_type drawType;
+
+	bool operator <(const Obj8Info_t& rhs) const
+	{
+		return index < rhs.index;
+	}
+};
+
 // This plane struct reprents one instance of a 
 // multiplayer plane.
 struct	XPMPPlane_t {
@@ -252,6 +266,8 @@ struct	XPMPPlane_t {
 	OBJ7Handle                  objHandle;
 	TextureHandle               texHandle;
 	TextureHandle               texLitHandle;
+
+	std::map<Obj8Info_t, OBJ8Handle> obj8Handles;
 };
 
 typedef	XPMPPlane_t *								XPMPPlanePtr;
@@ -262,6 +278,19 @@ typedef	vector<std::shared_ptr<XPMPPlane_t>>		XPMPPlaneVector;
 typedef	pair<XPMPPlaneNotifier_f, void *>			XPMPPlaneNotifierPair;
 typedef	pair<XPMPPlaneNotifierPair, XPLMPluginID>	XPMPPlaneNotifierTripple;
 typedef	vector<XPMPPlaneNotifierTripple>			XPMPPlaneNotifierVector;
+
+class ThreadSynchronizer
+{
+public:
+	void queueCall(std::function<void()> func);
+	void executeQueuedCalls();
+
+	static float flightLoopCallback(float, float, int, void *refcon);
+
+private:
+	std::mutex m_mutex;
+	std::deque<std::function<void()>> m_qeuedCalls;
+};
 
 // Prefs funcs - the client provides callbacks to pull ini key values 
 // for various functioning.
@@ -277,6 +306,7 @@ extern int								gDumpOneRenderCycle;	// Debug
 extern int 								gEnableCount;			// Hack - see TCAS support
 
 extern string							gDefaultPlane;			// ICAO of default plane
+extern ThreadSynchronizer				gThreadSynchronizer;
 
 // Helper funcs
 namespace xmp {

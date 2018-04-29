@@ -167,9 +167,9 @@ bool CslModelVertOffsetCalculator::findOffsetInObj8(CSLPlane_t &inOutCslModel) {
 		bool isRotateOrTranslateAnimDetected = false;
 		for (auto &obj8 : inOutCslModel.attachments) {
 			if (obj8.draw_type == draw_solid) {
-				std::ifstream file(obj8.file.c_str(), std::ios_base::in);
+				std::ifstream file(obj8.clonedFile.c_str(), std::ios_base::in);
 				if (!file.is_open()) {
-					XPLMDebugString(std::string(XPMP_CLIENT_NAME " Warning: The Y offset for the model is not found in obj8. Can't open the file: " + obj8.file + "\n").c_str());
+					XPLMDebugString(std::string(XPMP_CLIENT_NAME " Warning: The Y offset for the model is not found in obj8. Can't open the file: " + obj8.clonedFile + "\n").c_str());
 					return false;
 				}
 				int coordLinesNumber = 0;
@@ -180,7 +180,7 @@ bool CslModelVertOffsetCalculator::findOffsetInObj8(CSLPlane_t &inOutCslModel) {
 					if (line.size() == 0 || line.at(0) == ';' || line.at(0) == '#' || line.at(0) == '/') continue;
 					if (lineNumber == 1 && atoi(line.c_str()) < 800) {
 						XPLMDebugString(std::string(XPMP_CLIENT_NAME " Warning: The Y offset for the model is not found in obj. "
-							"Expect obj8 or higher but obj7 or lower is given. The obj: " + obj8.file + "\n").c_str());
+							"Expect obj8 or higher but obj7 or lower is given. The obj: " + obj8.clonedFile + "\n").c_str());
 						return false;
 					}
 					std::vector<std::string> tokens;
@@ -203,7 +203,7 @@ bool CslModelVertOffsetCalculator::findOffsetInObj8(CSLPlane_t &inOutCslModel) {
 				}
 				if (coordLinesNumber < 3) {
 					XPLMDebugString(std::string(XPMP_CLIENT_NAME " Warning: The Y offset for the model is not found in obj8. "
-						"Number of lines with coordinates (VT&VLINE) is too small. The obj: " + obj8.file + "\n").c_str());
+						"Number of lines with coordinates (VT&VLINE) is too small. The obj: " + obj8.clonedFile + "\n").c_str());
 					return false;
 				}
 			}
