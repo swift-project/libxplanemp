@@ -4,8 +4,48 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <fstream>
+#include <cctype>
 
-std::vector<std::string> tokenize(const std::string &str, const std::string &delim)
+inline std::string getFileContent(const std::string &filename)
+{
+	std::ifstream in(filename);
+	std::string content;
+    in.seekg(0, std::ios::end);
+    const auto size = static_cast<std::string::size_type>(in.tellg());
+	content.reserve(size);
+	in.seekg(0, std::ios::beg);
+	content.assign((std::istreambuf_iterator<char>(in)),
+		std::istreambuf_iterator<char>());
+	return content;
+}
+
+inline void writeFileContent(const std::string &filename, const std::string &content)
+{
+	std::ofstream out(filename, std::ios::out | std::ios::binary);
+	out << content;
+}
+
+// trim from start (in place)
+static inline void ltrim(std::string &s)
+{
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char c) { return !std::isspace(c); }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string &s)
+{
+	s.erase(std::find_if(s.rbegin(), s.rend(), [](char c) { return !std::isspace(c); }).base(), s.end());
+}
+
+// trim from both ends (in place)
+static inline void trim(std::string &s)
+{
+	ltrim(s);
+	rtrim(s);
+}
+
+inline std::vector<std::string> tokenize(const std::string &str, const std::string &delim = " \t\f\v\r\n")
 {
 	std::string dup = str;
 	std::vector<std::string> result;

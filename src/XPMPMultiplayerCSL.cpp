@@ -28,6 +28,7 @@
 #include "XStringUtils.h"
 #include "XOGLUtils.h"
 #include "XUtils.h"
+#include "XStringUtils.h"
 #include <stdio.h>
 #include <algorithm>
 //#include "PlatformUtils.h"
@@ -119,25 +120,6 @@ int HFS2PosixPath(const char *path, char *result, int resultLen)
 #endif
 
 #endif
-
-// trim from start (in place)
-static inline void ltrim(std::string &s)
-{
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char c) { return ! std::isspace(c); }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string &s)
-{
-	s.erase(std::find_if(s.rbegin(), s.rend(), [](char c) { return ! std::isspace(c); }).base(), s.end());
-}
-
-// trim from both ends (in place)
-static inline void trim(std::string &s)
-{
-	ltrim(s);
-	rtrim(s);
-}
 
 static void MakePartialPathNativeObj(string& io_str)
 {
@@ -783,17 +765,6 @@ bool ParseDummyCommand(const std::vector<std::string> & /* tokens */, CSLPackage
 	return true;
 }
 
-std::string GetFileContent(const std::string &filename)
-{
-	std::string content;
-	std::ifstream in(filename, std::ios::in | std::ios::binary);
-	if (in)
-	{
-		content = std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-	}
-	return content;
-}
-
 CSLPackage_t ParsePackageHeader(const string& path, const string& content)
 {
 	using command = std::function<bool(const std::vector<std::string> &, CSLPackage_t &, const string&, int, const string&)>;
@@ -1040,7 +1011,7 @@ bool CSL_LoadCSL(const char * inFolderPath, const char * inRelatedFile, const ch
 		if(!DoesFileExist(packageFile) || isPackageAlreadyLoaded(packagePath)) { continue; }
 
 		XPLMDump() << XPMP_CLIENT_NAME ": Loading package: " << packageFile << "\n";
-		std::string packageContent = GetFileContent(packageFile);
+		std::string packageContent = getFileContent(packageFile);
 		auto package = ParsePackageHeader(packagePath, packageContent);
 		if (package.hasValidHeader()) packages.push_back(package);
 	}
@@ -1057,7 +1028,7 @@ bool CSL_LoadCSL(const char * inFolderPath, const char * inRelatedFile, const ch
 			std::string packageFile(package.path);
 			packageFile += "/"; //XPLMGetDirectorySeparator();
 			packageFile += "xsb_aircraft.txt";
-			std::string packageContent = GetFileContent(packageFile);
+			std::string packageContent = getFileContent(packageFile);
 			ParseFullPackage(packageContent, package);
 		}
 	}
