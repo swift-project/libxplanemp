@@ -440,6 +440,7 @@ XPMPPlaneID		XPMPCreatePlane(
 		const char *			inAirline,
 		const char *			inLivery,
 		XPMPPlaneData_f			inDataFunc,
+		XPMPPlaneLoaded_f		inPlaneLoadedFunc,
 		void *					inRefcon)
 {
 	auto plane = std::make_shared<XPMPPlane_t>();
@@ -447,6 +448,7 @@ XPMPPlaneID		XPMPCreatePlane(
 	plane->livery = inLivery;
 	plane->airline = inAirline;
 	plane->dataFunc = inDataFunc;
+	plane->planeLoadedFunc = inPlaneLoadedFunc;
 	plane->ref = inRefcon;
 	plane->model = CSL_MatchPlane(inICAOCode, inAirline, inLivery, &plane->match_quality, true);
 	
@@ -480,13 +482,14 @@ bool CompareCaseInsensitive(const string &a, const string &b)
 	return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](char aa, char bb) { return toupper(aa) == toupper(bb); });
 }
 
-XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char *inICAOCode, const char *inAirline, const char *inLivery, XPMPPlaneData_f inDataFunc, void *inRefcon)
+XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char *inICAOCode, const char *inAirline, const char *inLivery, XPMPPlaneData_f inDataFunc, XPMPPlaneLoaded_f inPlaneLoadedFunc, void *inRefcon)
 {
 	auto plane = std::make_shared<XPMPPlane_t>();
 	plane->icao = inICAOCode;
 	plane->livery = inLivery;
 	plane->airline = inAirline;
 	plane->dataFunc = inDataFunc;
+	plane->planeLoadedFunc = inPlaneLoadedFunc;
 	plane->ref = inRefcon;
 
 	// Find the model
@@ -505,7 +508,7 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 		XPLMDebugString(inModelName);
 		XPLMDebugString(" is unknown! Falling back to own model matching.");
 		XPLMDebugString("\n");
-		return XPMPCreatePlane(inICAOCode, inAirline, inLivery, inDataFunc, inRefcon);
+		return XPMPCreatePlane(inICAOCode, inAirline, inLivery, inDataFunc, inPlaneLoadedFunc, inRefcon);
 	}
 
 	plane->pos.size = sizeof(plane->pos);

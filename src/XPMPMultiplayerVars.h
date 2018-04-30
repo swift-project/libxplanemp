@@ -37,6 +37,7 @@
 #include <memory>
 #include <deque>
 #include <mutex>
+#include <atomic>
 
 #include "XObjDefs.h"
 
@@ -226,6 +227,9 @@ struct	XPMPPlane_t {
 	
 	// This callback is used to pull data from the client for posiitons, etc.
 	XPMPPlaneData_f			dataFunc;
+
+	// This callback is called once the plane is loaded.
+	XPMPPlaneLoaded_f		planeLoadedFunc;
 	void *					ref = nullptr;
 	
 	// This is last known data we got for the plane, with timestamps.
@@ -242,6 +246,7 @@ struct	XPMPPlane_t {
 	TextureHandle               texLitHandle;
 
 	std::map<Obj8Info_t, OBJ8Handle> obj8Handles;
+	std::atomic_bool					allObj8Loaded = { false };
 };
 
 typedef	XPMPPlane_t *								XPMPPlanePtr;

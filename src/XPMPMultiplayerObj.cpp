@@ -545,6 +545,15 @@ void OBJ_LoadModelAsync(const std::shared_ptr<XPMPPlane_t> &plane)
 	{
 		std::atomic_store(&plane->objHandle, handle);
 
+		if (! handle)
+		{
+			gThreadSynchronizer.queueCall([=]()
+			{
+				plane->planeLoadedFunc(plane.get(), false, plane->ref);
+			});
+			return;
+		}
+
 		string texturePath = plane->model->texturePath;
 		if (texturePath.empty()) { texturePath = plane->objHandle->defaultTexture; }
 

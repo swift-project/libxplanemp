@@ -282,6 +282,16 @@ void Obj8Manager::objectLoaded(const std::string &fileName, XPLMObjectRef object
 		XPLMDebugString(fileName.c_str());
 		XPLMDebugString(")\n");
 
+		auto callbacksIt = m_pendingCallbacks.find(fileName);
+		if (callbacksIt != m_pendingCallbacks.end())
+		{
+			for (auto &callback : callbacksIt->second)
+			{
+				callback(nullptr);
+			}
+			m_pendingCallbacks.erase(callbacksIt);
+		}
+
 		m_pendingCallbacks.erase(fileName);
 	}
 }
@@ -406,13 +416,37 @@ void OBJ_LoadObj8Async(const std::shared_ptr<XPMPPlane_t> &plane)
 
 		gObj8Manager.loadAsync(attachment, plane->model->getMtlCode(), [plane, obj8Info](const Obj8Manager::ResourceHandle &resourceHandle)
 		{
+			if (! resourceHandle)
+			{
+				gThreadSynchronizer.queueCall([=]()
+				{
+					plane->planeLoadedFunc(plane.get(), false, plane->ref);
+				});
+				return;
+			}
+
+			bool allObj8Loaded = true;
 			for (auto &obj8handle : plane->obj8Handles)
 			{
 				if (obj8handle.first.index == obj8Info.index)
 				{
 					std::atomic_store(&obj8handle.second, resourceHandle);
-					return;
 				}
+
+				if (! obj8handle.second) { allObj8Loaded = false; }
+			}
+
+			if (!plane->allObj8Loaded && allObj8Loaded)
+			{
+				plane->allObj8Loaded = true;
+				gThreadSynchronizer.queueCall([=]()
+				{
+					XPLMDebugString(XPMP_CLIENT_NAME ": Plane fully loaded ");
+					XPLMDebugString("(");
+					XPLMDebugString(plane->pos.label);
+					XPLMDebugString(")\n");
+					plane->planeLoadedFunc(plane.get(), true, plane->ref);
+				});
 			}
 		});
 	}

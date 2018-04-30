@@ -5,7 +5,7 @@ XPCAircraft::XPCAircraft(
 		const char *			inAirline,
 		const char *			inLivery)
 {
-	mPlane = XPMPCreatePlane(inICAOCode, inAirline, inLivery, AircraftCB,
+	mPlane = XPMPCreatePlane(inICAOCode, inAirline, inLivery, AircraftCB, nullptr,
 							 static_cast<void *>(this));
 }
 

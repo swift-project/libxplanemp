@@ -236,6 +236,16 @@ typedef	XPMPPlaneCallbackResult (* XPMPPlaneData_f)(
 		void *				inRefcon);
 
 /*
+ * XPMPPlaneLoaded_f
+ *
+ * This callback is called once the plane model finished loading.
+ */
+typedef	void (* XPMPPlaneLoaded_f)(
+		XPMPPlaneID			inPlane,
+		bool				inSucceeded,
+		void *				inRefcon);
+
+/*
  * XPMPMultiplayerInitLegacyData
  *
  * This routine initializes legacy portions of the multiplayer library.
@@ -398,6 +408,7 @@ XPMPPlaneID	XPMPCreatePlane(
 		const char *			inAirline,
 		const char *			inLivery,
 		XPMPPlaneData_f			inDataFunc,
+		XPMPPlaneLoaded_f		inPlaneLoadedFunc,
 		void *					inRefcon);
 
 XPMPPlaneID	XPMPCreatePlaneWithModelName(
@@ -406,6 +417,7 @@ XPMPPlaneID	XPMPCreatePlaneWithModelName(
 		const char *			inAirline,
 		const char *			inLivery,
 		XPMPPlaneData_f			inDataFunc,
+		XPMPPlaneLoaded_f		inPlaneLoadedFunc,
 		void *                  inRefcon);
 
 /*
