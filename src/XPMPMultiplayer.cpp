@@ -451,6 +451,8 @@ XPMPPlaneID		XPMPCreatePlane(
 	plane->planeLoadedFunc = inPlaneLoadedFunc;
 	plane->ref = inRefcon;
 	plane->model = CSL_MatchPlane(inICAOCode, inAirline, inLivery, &plane->match_quality, true);
+
+	if (! plane->model) { return nullptr; }
 	
 	plane->pos.size = sizeof(plane->pos);
 	plane->surface.size = sizeof(plane->surface);
