@@ -178,7 +178,7 @@ static float sphere_distance_sqr(const cull_info_t * i, float x, float y, float 
 	return xp*xp+yp*yp+zp*zp;
 }
 
-static void convert_to_2d(const cull_info_t * i, const float * vp, float x, float y, float z, float w, float * out_x, float * out_y)
+static void convert_to_2d(const cull_info_t * i, const int * vp, float x, float y, float z, float w, float * out_x, float * out_y)
 {
 	float xe = x * i->model_view[0] + y * i->model_view[4] + z * i->model_view[ 8] + w * i->model_view[12];
 	float ye = x * i->model_view[1] + y * i->model_view[5] + z * i->model_view[ 9] + w * i->model_view[13];
@@ -194,8 +194,8 @@ static void convert_to_2d(const cull_info_t * i, const float * vp, float x, floa
 	yc /= wc;
 	//	zc /= wc;
 
-	*out_x = vp[0] + (1.0f + xc) * vp[2] / 2.0f;
-	*out_y = vp[1] + (1.0f + yc) * vp[3] / 2.0f;
+	*out_x = static_cast<float>(vp[0]) + (1.0f + xc) * static_cast<float>(vp[2]) / 2.0f;
+	*out_y = static_cast<float>(vp[1]) + (1.0f + yc) * static_cast<float>(vp[3]) / 2.0f;
 }
 
 
@@ -720,11 +720,17 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				y_scale = XPLMGetDataf(gMSAAYRatioRef);
 			}
 
-			GLfloat	vp[4];
+			GLint	vp[4];
 			if (viewportRef != nullptr) {
-				XPLMGetDatavf(viewportRef, vp, 0, 4);
-			} else {
-				glGetFloatv(GL_VIEWPORT, vp);
+				// sim/graphics/view/viewport	int[4]	n	Pixels	Current OpenGL viewport in device window coordinates.Note thiat this is left, bottom, right top, NOT left, bottom, width, height!!
+				int vpInt[4] = {0,0,0,0};
+				XPLMGetDatavi(viewportRef, vpInt, 0, 4);
+				vp[0] = vpInt[0];
+				vp[1] = vpInt[1];
+				vp[2] = vpInt[2] - vpInt[0];
+				vp[3] = vpInt[3] - vpInt[1];
+			} else {		
+				glGetIntegerv(GL_VIEWPORT, vp);
 			}
 
 			glMatrixMode(GL_PROJECTION);
@@ -737,6 +743,9 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			glLoadIdentity();
 			if (x_scale > 1.0 || y_scale > 1.0) {
 				glScalef(x_scale, y_scale, 1.0);
+			} else {
+				x_scale = 1.0;
+				y_scale = 1.0;
 			}
 
 			float c[4] = { 1, 1, 0, 1 };
