@@ -88,6 +88,10 @@ static XPLMDataRef		projectionMatrixRef = nullptr;
 static XPLMDataRef		modelviewMatrixRef = nullptr;
 static XPLMDataRef		viewportRef = nullptr;
 
+bool					gMSAAHackInitialised = false;
+static XPLMDataRef  	gMSAAXRatioRef = nullptr;
+static XPLMDataRef		gMSAAYRatioRef = nullptr;
+
 static void
 init_cullinfo()
 {
@@ -324,7 +328,13 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		}
 		return;
 	}
-	
+
+	if (!gMSAAHackInitialised) {
+		gMSAAHackInitialised = true;
+		gMSAAXRatioRef = XPLMFindDataRef("sim/private/controls/hdr/fsaa_ratio_x");
+		gMSAAYRatioRef = XPLMFindDataRef("sim/private/controls/hdr/fsaa_ratio_y");
+	}
+
 	cull_info_t			gl_camera;
 	setup_cull_info(&gl_camera);
 	XPLMCameraPosition_t x_camera;
@@ -701,6 +711,15 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	if(is_blend)
 		if ( gDrawLabels )
 		{
+			float	x_scale = 1.0;
+			float	y_scale = 1.0;
+			if (gMSAAXRatioRef) {
+				x_scale = XPLMGetDataf(gMSAAXRatioRef);
+			}
+			if (gMSAAYRatioRef) {
+				y_scale = XPLMGetDataf(gMSAAYRatioRef);
+			}
+
 			GLfloat	vp[4];
 			if (viewportRef != nullptr) {
 				XPLMGetDatavf(viewportRef, vp, 0, 4);
@@ -716,9 +735,11 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 			glLoadIdentity();
+			if (x_scale > 1.0 || y_scale > 1.0) {
+				glScalef(x_scale, y_scale, 1.0);
+			}
 
 			float c[4] = { 1, 1, 0, 1 };
-
 
 			for (RenderMap::iterator iter = myPlanes.begin(); iter != myPlanes.end(); ++iter)
 				if(iter->first < labelDist)
@@ -731,7 +752,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 						c[0] = c[1] = 0.5f + 0.5f * rat;
 						c[2] = 0.5f - 0.5f * rat;		// gray -> yellow - no alpha in the SDK - foo!
 
-						XPLMDrawString(c, static_cast<int>(x), static_cast<int>(y)+10, (char *) iter->second.plane->pos.label, NULL, xplmFont_Basic);
+						XPLMDrawString(c, static_cast<int>(x / x_scale), static_cast<int>(y / y_scale)+10, (char *) iter->second.plane->pos.label, NULL, xplmFont_Basic);
 					}
 
 			glMatrixMode(GL_PROJECTION);
