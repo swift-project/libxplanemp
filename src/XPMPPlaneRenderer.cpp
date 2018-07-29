@@ -82,12 +82,39 @@ struct cull_info_t {					// This struct has everything we need to cull fast!
 	float	top_clip[4];
 };
 
+static bool				gCullInfoInitialised = false;
+static XPLMDataRef		projectionMatrixRef = nullptr;
+static XPLMDataRef		modelviewMatrixRef = nullptr;
+static XPLMDataRef		viewportRef = nullptr;
+
+static void
+init_cullinfo()
+{
+	modelviewMatrixRef = XPLMFindDataRef("sim/graphics/view/modelview_matrix");
+	projectionMatrixRef = XPLMFindDataRef("sim/graphics/view/projection_matrix");
+	viewportRef = XPLMFindDataRef("sim/graphics/view/viewport");
+	gCullInfoInitialised = true;
+}
+
+
 static void setup_cull_info(cull_info_t * i)
 {
-	// First, just read out the current OpenGL matrices...do this once at setup because it's not the fastest thing to do.
-	glGetFloatv(GL_MODELVIEW_MATRIX ,i->model_view);
-	glGetFloatv(GL_PROJECTION_MATRIX,i->proj);
-	
+	if (!gCullInfoInitialised) {
+		init_cullinfo();
+	}
+	// First, just read out the current OpenGL matrices...do this once at setup
+	// because it's not the fastest thing to do.
+	//
+	// if our X-Plane version supports it, pull it from the daatrefs to avoid a
+	// potential driver stall.
+	if (!modelviewMatrixRef || !projectionMatrixRef) {
+		glGetFloatv(GL_MODELVIEW_MATRIX, i->model_view);
+		glGetFloatv(GL_PROJECTION_MATRIX, i->proj);
+	} else {
+		XPLMGetDatavf(modelviewMatrixRef, i->model_view, 0, 16);
+		XPLMGetDatavf(projectionMatrixRef, i->proj, 0, 16);
+	}
+
 	// Now...what the heck is this?  Here's the deal: the clip planes have values in "clip" coordinates of: Left = (1,0,0,1)
 	// Right = (-1,0,0,1), Bottom = (0,1,0,1), etc.  (Clip coordinates are coordinates from -1 to 1 in XYZ that the driver
 	// uses.  The projection matrix converts from eye to clip coordinates.)
@@ -194,6 +221,9 @@ void			XPMPInitDefaultPlaneRenderer(void)
 	
 	// SETUP - mostly just fetch datarefs.
 
+	if (!gCullInfoInitialised) {
+		init_cullinfo();
+	}
 	gVisDataRef = XPLMFindDataRef("sim/graphics/view/visibility_effective_m");
 	if (gVisDataRef == NULL) gVisDataRef = XPLMFindDataRef("sim/weather/visibility_effective_m");
 	if (gVisDataRef == NULL)
@@ -672,7 +702,11 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		if ( gDrawLabels )
 		{
 			GLfloat	vp[4];
-			glGetFloatv(GL_VIEWPORT,vp);
+			if (viewportRef != nullptr) {
+				XPLMGetDatavf(viewportRef, vp, 0, 4);
+			} else {
+				glGetFloatv(GL_VIEWPORT, vp);
+			}
 
 			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
