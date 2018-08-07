@@ -84,9 +84,8 @@ int		CreateBitmapFromFile(const char * inFilePath, struct ImageInfo * outImageIn
 	struct	BMPImageDesc	imageDesc;
 	int						pad;
 	int 					err = 0;
-	FILE *					fi = NULL;
 
-	fi = fopen(inFilePath, "rb");
+	FILE *fi = fopen(inFilePath, "rb");
 	if (fi == NULL)
 		goto bail;
 
@@ -148,7 +147,6 @@ bail:
 
 int		WriteBitmapToFile(const struct ImageInfo * inImage, const char * inFilePath)
 {	
-	FILE *					fi = NULL;
 	struct	BMPHeader		header;
 	struct	BMPImageDesc	imageDesc;
 	int						err = 0;
@@ -188,7 +186,7 @@ int		WriteBitmapToFile(const struct ImageInfo * inImage, const char * inFilePath
 	BMP_EndianFlipInt(&imageDesc.colorsUsed);
 	BMP_EndianFlipInt(&imageDesc.colorsImportant);
 
-	fi = fopen(inFilePath, "wb");
+	FILE *fi = fopen(inFilePath, "wb");
 	if (fi == NULL)
 		goto bail;
 	
