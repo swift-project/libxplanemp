@@ -85,7 +85,7 @@ public:
 
 	Obj8Manager() = default;
 
-	void loadAsync(obj_for_acf &objForAcf, const std::string &mtl, ResourceCallback callback);
+	void loadAsync(obj_for_acf &objForAcf, const std::string &mtl, bool needsCloning, ResourceCallback callback);
 
 private:
 	struct XPLMCallbackRef

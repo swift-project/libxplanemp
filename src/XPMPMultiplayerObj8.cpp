@@ -137,11 +137,11 @@ int obj_get_float_array(
 
 static bool obj8_load_async = true;
 
-void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, ResourceCallback callback)
+void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, bool needsCloning, ResourceCallback callback)
 {
 	std::string fileNameToLoad = objForAcf.sourceFile;
 
-	if (objForAcf.draw_type == draw_solid)
+	if (needsCloning && objForAcf.draw_type == draw_solid)
 	{
 		if (objForAcf.clonedFile.empty())
 		{
@@ -193,7 +193,7 @@ void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, Reso
 
 	std::thread loaderThread([=]
 	{
-		if (objForAcf.draw_type == draw_solid)
+		if (needsCloning && objForAcf.draw_type == draw_solid)
 		{
 			cloneObj8WithDifferentTexture(sourceObjFile, destObjFile, objForAcf.textureFile, objForAcf.litTextureFile);
 			gThreadSynchronizer.queueCall([=]()
@@ -413,8 +413,12 @@ void OBJ_LoadObj8Async(const std::shared_ptr<XPMPPlane_t> &plane)
 		obj8Info.index = plane->obj8Handles.size();
 		obj8Info.drawType = attachment.draw_type;
 		plane->obj8Handles[obj8Info] = nullptr;
+		std::string mtlCode = plane->model->getMtlCode();
 
-		gObj8Manager.loadAsync(attachment, plane->model->getMtlCode(), [plane, obj8Info](const Obj8Manager::ResourceHandle &resourceHandle)
+		// If the model has an additional texture defined, we need to clone the OBJ8
+		bool shouldClone = !plane->model->textureName.empty();
+
+		gObj8Manager.loadAsync(attachment, mtlCode, shouldClone, [plane, obj8Info](const Obj8Manager::ResourceHandle &resourceHandle)
 		{
 			if (! resourceHandle)
 			{
