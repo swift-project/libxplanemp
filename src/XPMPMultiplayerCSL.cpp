@@ -840,11 +840,17 @@ void ParseFullPackage(const std::string &content, CSLPackage_t &package)
 			auto it = commands.find(tokens[0]);
 			if (it != commands.end())
 			{
-				it->second(tokens, package, packageFilePath, lineNum, line);
+				bool result = it->second(tokens, package, packageFilePath, lineNum, line);
+				if (!result)
+				{
+					XPLMDump(packageFilePath, lineNum, line) << XPMP_CLIENT_NAME " Ignoring package due to previous errors!\n";
+					break;
+				}
 			}
 			else
 			{
-				XPLMDump(packageFilePath, lineNum, line);
+				XPLMDump(packageFilePath, lineNum, line) << XPMP_CLIENT_NAME " Ignoring package due to unknown command!\n";
+				break;
 			}
 		}
 	}
