@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <cstring>
 #include <XPMPMultiplayer.h>
+#include <XPLMDataAccess.h>
 #if IBM
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -271,6 +272,8 @@ VerifyTextureImage(const string &filename, const ImageInfo &im)
 extern void XPMPSetupGLDebug();
 #endif
 
+static XPLMDataRef sAnisotropicLevel = nullptr;
+
 bool LoadTextureFromMemory(ImageInfo &im, bool magentaAlpha, bool inWrap, bool mipmap, GLuint &texNum)
 {
 	while (GL_NO_ERROR != glGetError()) 
@@ -278,6 +281,12 @@ bool LoadTextureFromMemory(ImageInfo &im, bool magentaAlpha, bool inWrap, bool m
 		XPLMDebugString(XPMP_CLIENT_NAME ": Something has errored the OpenGL stack prior to calling LoadTextureFromMemory, wtf?\n");
 	}
 	float	tex_anisotropyLevel = gFloatPrefsFunc("planes", "texture_anisotropy", 0.0);
+	if (sAnisotropicLevel == nullptr) {
+		sAnisotropicLevel = XPLMFindDataRef("sim/private/controls/reno/aniso_filter");
+	}
+	if (sAnisotropicLevel != nullptr) {
+		tex_anisotropyLevel = static_cast<GLfloat>(XPLMGetDatai(sAnisotropicLevel));
+	}
 	if (tex_anisotropyLevel > xpmp_tex_maxAnisotropy) {
 		tex_anisotropyLevel = xpmp_tex_maxAnisotropy;
 	}
