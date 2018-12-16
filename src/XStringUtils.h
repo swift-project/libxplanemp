@@ -9,7 +9,7 @@
 
 inline std::string getFileContent(const std::string &filename)
 {
-	std::ifstream in(filename);
+	std::ifstream in(filename, std::ifstream::in | std::ifstream::binary);
 	std::string content;
     in.seekg(0, std::ios::end);
     const auto size = static_cast<std::string::size_type>(in.tellg());
@@ -17,7 +17,17 @@ inline std::string getFileContent(const std::string &filename)
 	in.seekg(0, std::ios::beg);
 	content.assign((std::istreambuf_iterator<char>(in)),
 		std::istreambuf_iterator<char>());
-	return content;
+	std::string result;
+	result.reserve(size);
+	for (decltype(content)::size_type begin = 0; begin != content.npos; )
+	{
+		auto end = content.find_first_of("\r\n", begin, 2);
+		if (end == content.npos) { end = content.size(); }
+		result.append(content, begin, end - begin);
+		result.push_back('\n');
+		begin = content.find_first_not_of("\r\n", end, 2);
+	}
+	return result;
 }
 
 inline void writeFileContent(const std::string &filename, const std::string &content)
