@@ -787,29 +787,31 @@ void		XPMPDumpOneCycle(void)
 	gDumpOneRenderCycle = true;
 }
 
-void XPMPGetVerticalOffset(XPMPPlaneID inPlane, double *outOffset)
+bool XPMPGetVerticalOffset(XPMPPlaneID inPlane, double *outOffset)
 {
 	*outOffset = 0.0;
 	XPMPPlanePtr plane = XPMPPlaneFromID(inPlane);
-	if (!plane->model) { return; }
+	if (!plane->model) { return false; }
 
 	if (plane->model->isXsbVertOffsetAvail)
 	{
 		*outOffset = plane->model->xsbVertOffset;
-		return;
+		return true;
 	}
 
 	if (plane->model->plane_type == plane_Obj)
 	{
 		auto handle = std::atomic_load(&plane->objHandle);
-		if (! handle) { return; }
+		if (! handle) { return false; }
 		*outOffset = handle->calcVertOffset;
-		return;
+		return true;
 	}
 
 	if (plane->model->plane_type == plane_Obj8)
 	{
 		// OBJ8 model always have 0.0 offset per spec
 		*outOffset = 0.0;
+		return false;
 	}
+	return false;
 }

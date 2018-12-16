@@ -631,7 +631,7 @@ void				  XPMPDisableAircraftLabels(void);
 
 bool				  XPMPDrawingAircraftLabels(void);
 
-void XPMPGetVerticalOffset(
+bool XPMPGetVerticalOffset(
 	XPMPPlaneID inPlane,
 	double *outOffset);
 
