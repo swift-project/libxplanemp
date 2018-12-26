@@ -210,7 +210,7 @@ find_first_bit_set(unsigned int x)
 {
 	int r = -1;
 	for (unsigned i = 0; i < sizeof(x)*8; i++) {
-		if ((1<<(i)) & x) {
+		if ((1u<<(i)) & x) {
 			r = i;
 		}
 	}
