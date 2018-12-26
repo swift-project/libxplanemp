@@ -38,6 +38,9 @@ public:
 	StTextFileScanner(const char * inFileName, bool skip_blanks);
 	~StTextFileScanner();
 
+	StTextFileScanner(const StTextFileScanner &) = delete;
+	StTextFileScanner &operator =(const StTextFileScanner &) = delete;
+
 	void	skip_blanks(bool skip_blanks);
 	bool	done();
 	void	next();

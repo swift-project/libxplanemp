@@ -254,8 +254,6 @@ const char * 	XPMPMultiplayerInit(int (* inIntPrefsFunc)(const char *, const cha
 	//char	sysPath[1024];
 	//FILE *	fi;
 	
-	bool	problem = false;
-
 	XPMPInitDefaultPlaneRenderer();
 
 	// Register the plane control calls.
@@ -271,8 +269,7 @@ const char * 	XPMPMultiplayerInit(int (* inIntPrefsFunc)(const char *, const cha
 
 	XPLMRegisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, -1, &gThreadSynchronizer);
 
-	if (problem)		return "There were problems initializing " XPMP_CLIENT_LONGNAME ".  Please examine X-Plane's error.out file for detailed information.";
-	else 				return "";
+	return "";
 }
 
 void XPMPMultiplayerCleanup(void)
