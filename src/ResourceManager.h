@@ -36,9 +36,11 @@ public:
             {
                 resource = resourceIt->second.lock();
             }
-            if (resource) { callback(resource); }
-
-            resource = m_factory(name);
+            if (! resource)
+            {
+                resource = m_factory(name);
+                m_resourceCache[name] = resource;
+            }
             callback(resource);
         });
         
