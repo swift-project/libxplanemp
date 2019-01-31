@@ -27,11 +27,11 @@
 #include "XPLMDefs.h"
 
 #ifndef XPMP_CLIENT_NAME
-#define XPMP_CLIENT_NAME "XSB"
+#define XPMP_CLIENT_NAME "A_PLUGIN"
 #endif
 
 #ifndef XPMP_CLIENT_LONGNAME
-#define XPMP_CLIENT_LONGNAME "XSquawkBox"
+#define XPMP_CLIENT_LONGNAME "A Plugin"
 #endif
 
 #ifdef __cplusplus
