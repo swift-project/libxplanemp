@@ -30,7 +30,7 @@ public:
         std::thread loaderThread ([ = ]
         {
             ResourceHandle resource;
-            std::lock_guard<std::mutex> lock(m_mutex);
+            std::unique_lock<std::mutex> lock(m_mutex);
             auto resourceIt = m_resourceCache.find(name);
             if (resourceIt != m_resourceCache.end())
             {
@@ -41,6 +41,7 @@ public:
                 resource = m_factory(name);
                 m_resourceCache[name] = resource;
             }
+            lock.unlock();
             callback(resource);
         });
         
