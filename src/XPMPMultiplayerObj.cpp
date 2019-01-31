@@ -407,8 +407,7 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 	// Go through all of the commands for this object and filter out the polys
 	// and the lights.
 
-	float minY = 0.0;
-	float maxY = 0.0;
+	float minY = std::numeric_limits<float>::max();
 	for (const auto &cmd : objInfo.obj.cmds)
 	{
 		switch(cmd.cmdType) {
@@ -459,7 +458,6 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 				indexes.push_back(index);
 
 				minY = std::min(minY, xyz[1]);
-				maxY = std::max(maxY, xyz[1]);
 			}
 
 			switch(cmd.cmdID) {
@@ -512,14 +510,7 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 		}
 	}
 
-	if (minY < 0.0)
-	{
-		objInfo.calcVertOffset = std::fabs(minY);
-	}
-	else
-	{
-		objInfo.calcVertOffset = -maxY;
-	}
+	objInfo.calcVertOffset = -minY;
 
 	// Calculate our normals for all LOD's
 	for (size_t i = 0; i < objInfo.lods.size(); i++)
