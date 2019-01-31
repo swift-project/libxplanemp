@@ -593,7 +593,7 @@ bool ParseObj8Command(const std::vector<std::string> &tokens, CSLPackage_t &pack
 
 		package.planes.back().textureName = textureFilename;
 
-		if (tokens.size() == 6)
+		if (tokens.size() >= 6)
 		{
 			string litTexturePath = tokens[5];
 			att.litTextureFile = litTexturePath;
@@ -632,11 +632,8 @@ bool ParseVertOffsetCommand(const std::vector<std::string> &tokens, CSLPackage_t
 		XPLMDump(path, lineNum, line) << XPMP_CLIENT_NAME " WARNING: VERT_OFFSET command takes 1 argument.\n";
 		return false;
 	}
-	else 
-	{
-			package.planes.back().xsbVertOffset = atof(tokens[1].c_str());
-			package.planes.back().isXsbVertOffsetAvail = true;
-	}
+	package.planes.back().xsbVertOffset = std::stod(tokens[1]);
+	package.planes.back().isXsbVertOffsetAvail = true;
 	return true;
 }
 

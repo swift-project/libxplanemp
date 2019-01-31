@@ -241,6 +241,7 @@ void			XPMPInitDefaultPlaneRenderer(void)
 
 void XPMPDeinitDefaultPlaneRenderer() {
 	XPLMDestroyProbe(terrainProbe);
+	terrainProbe = nullptr;
 }
 
 double getCorrectYValue(double inX, double inY, double inZ, double inModelYOffset, bool inIsClampingOn) {

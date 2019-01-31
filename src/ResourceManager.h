@@ -20,10 +20,10 @@ class ResourceManager
 {
 public:
     using ResourceHandle = std::shared_ptr<T>; // C++20: use std::atomic<std::shared_ptr<T>>
-    using ResourceCache = std::unordered_map<std::string, std::weak_ptr<T>>;
+    using Factory = std::function<ResourceHandle(std::string)>;
     using Callback = std::function<void(const ResourceHandle &)>;
 
-    ResourceManager(std::function<ResourceHandle(std::string)> factory) : m_factory(factory) {}
+    ResourceManager(Factory factory) : m_factory(factory) {}
 
     void loadAsync(const std::string &name, Callback callback)
     {
@@ -52,9 +52,9 @@ public:
     }
 
 private:
-    std::function<ResourceHandle(std::string)> m_factory;
+    Factory m_factory;
     std::mutex m_mutex;
-    ResourceCache m_resourceCache;
+    std::unordered_map<std::string, std::weak_ptr<T>> m_resourceCache;
 };
 
 #endif
