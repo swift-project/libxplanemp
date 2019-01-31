@@ -19,7 +19,7 @@ template <typename T>
 class ResourceManager
 {
 public:
-    using ResourceHandle = std::shared_ptr<T>;
+    using ResourceHandle = std::shared_ptr<T>; // C++20: use std::atomic<std::shared_ptr<T>>
     using ResourceCache = std::unordered_map<std::string, std::weak_ptr<T>>;
     using Callback = std::function<void(const ResourceHandle &)>;
 

@@ -555,13 +555,13 @@ void OBJ_LoadModelAsync(const std::shared_ptr<XPMPPlane_t> &plane)
 		}
 
 		string texturePath = plane->model->texturePath;
-		if (texturePath.empty()) { texturePath = plane->objHandle->defaultTexture; }
+		if (texturePath.empty()) { texturePath = std::atomic_load(&plane->objHandle)->defaultTexture; }
 
 		gTextureManager.loadAsync(texturePath, [plane](const TextureManager::ResourceHandle &textureHandle)
 		{
 			std::atomic_store(&plane->texHandle, textureHandle);
 			string textureLitPath = plane->model->textureLitPath;
-			if (textureLitPath.empty()) { textureLitPath = plane->objHandle->defaultLitTexture; }
+			if (textureLitPath.empty()) { textureLitPath = std::atomic_load(&plane->objHandle)->defaultLitTexture; }
 
 			gTextureManager.loadAsync(textureLitPath, [plane](const TextureManager::ResourceHandle &textureLitHandle)
 			{

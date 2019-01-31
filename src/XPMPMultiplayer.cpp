@@ -33,6 +33,7 @@
 #include <string>
 #include <cstring>
 #include <sstream>
+#include <memory>
 
 #include "XPLMProcessing.h"
 #include "XPLMPlanes.h"
@@ -560,9 +561,9 @@ int	XPMPChangePlaneModel(
 	plane->model = CSL_MatchPlane(inICAOCode, inAirline, inLivery, &plane->match_quality, true);
 
 	// we're changing model, we must flush the resource handles so they get reloaded.
-	plane->objHandle = nullptr;
-	plane->texHandle = nullptr;
-	plane->texLitHandle = nullptr;
+	std::atomic_store(&plane->objHandle, OBJ7Handle{});
+	std::atomic_store(&plane->texHandle, TextureHandle{});
+	std::atomic_store(&plane->texLitHandle, TextureHandle{});
 
 	for (XPMPPlaneNotifierVector::iterator iter2 = gObservers.begin(); iter2 !=
 		 gObservers.end(); ++iter2)
