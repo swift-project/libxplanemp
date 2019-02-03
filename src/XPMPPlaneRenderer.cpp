@@ -91,6 +91,7 @@ static XPLMDataRef		viewportRef = nullptr;
 bool					gMSAAHackInitialised = false;
 static XPLMDataRef  	gMSAAXRatioRef = nullptr;
 static XPLMDataRef		gMSAAYRatioRef = nullptr;
+static XPLMDataRef      gHDROnRef = nullptr;
 
 static void
 init_cullinfo()
@@ -333,6 +334,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		gMSAAHackInitialised = true;
 		gMSAAXRatioRef = XPLMFindDataRef("sim/private/controls/hdr/fsaa_ratio_x");
 		gMSAAYRatioRef = XPLMFindDataRef("sim/private/controls/hdr/fsaa_ratio_y");
+		gHDROnRef      = XPLMFindDataRef("sim/graphics/settings/HDR_on");
 	}
 
 	cull_info_t			gl_camera;
@@ -713,11 +715,13 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		{
 			float	x_scale = 1.0;
 			float	y_scale = 1.0;
-			if (gMSAAXRatioRef) {
-				x_scale = XPLMGetDataf(gMSAAXRatioRef);
-			}
-			if (gMSAAYRatioRef) {
-				y_scale = XPLMGetDataf(gMSAAYRatioRef);
+			if (gHDROnRef && XPLMGetDatai(gHDROnRef)) {     // SSAA hack only if HDR enabled
+				if (gMSAAXRatioRef) {
+					x_scale = XPLMGetDataf(gMSAAXRatioRef);
+				}
+				if (gMSAAYRatioRef) {
+					y_scale = XPLMGetDataf(gMSAAYRatioRef);
+				}
 			}
 
 			GLint	vp[4];
