@@ -345,6 +345,8 @@ bool ParseDependencyCommand(const std::vector<std::string> &tokens, CSLPackage_t
 
 bool ParseObjectCommand(const std::vector<std::string> &tokens, CSLPackage_t &package, const string& path, int lineNum, const string& line)
 {
+	package.planes.push_back(CSLPlane_t());
+
 	std::vector<std::string> dupTokens = tokens;
 	BreakStringPvt(line.c_str(), dupTokens, 2, " \t\r\n");
 	if (tokens.size() != 2)
@@ -373,7 +375,6 @@ bool ParseObjectCommand(const std::vector<std::string> &tokens, CSLPackage_t &pa
 	// Remove *.obj extension
 	objFileName.erase(objFileName.find_last_of('.'));
 
-	package.planes.push_back(CSLPlane_t());
 	package.planes.back().dirNames = dirNames;
 	package.planes.back().objectName = objFileName;
 	package.planes.back().plane_type = plane_Obj;
@@ -433,6 +434,7 @@ bool ParseAircraftCommand(const std::vector<std::string> &tokens, CSLPackage_t &
 	if (tokens.size() != 4)
 	{
 		XPLMDump(path, lineNum, line) << XPMP_CLIENT_NAME " WARNING: AIRCRAFT command takes 3 arguments.\n";
+		return false;
 	}
 
 	int sim, xplm;
@@ -468,13 +470,15 @@ bool ParseAircraftCommand(const std::vector<std::string> &tokens, CSLPackage_t &
 
 bool ParseObj8AircraftCommand(const std::vector<std::string> &tokens, CSLPackage_t &package, const string& path, int lineNum, const string& line)
 {
+	package.planes.push_back(CSLPlane_t());
+
 	// OBJ8_AIRCRAFT <path>
 	if (tokens.size() != 2)
 	{
 		XPLMDump(path, lineNum, line) << XPMP_CLIENT_NAME " WARNING: OBJ8_AIRCRAFT command takes 1 argument.\n";
+		return false;
 	}
 
-	package.planes.push_back(CSLPlane_t());
 	package.planes.back().plane_type = plane_Obj8;
 	package.planes.back().file_path = tokens[1];
 	package.planes.back().moving_gear = true;
@@ -495,6 +499,7 @@ bool ParseObj8Command(const std::vector<std::string> &tokens, CSLPackage_t &pack
 	if (tokens.size() < 4 || tokens.size() > 6)
 	{
 		XPLMDump(path, lineNum, line) << XPMP_CLIENT_NAME " WARNING: OBJ8 command takes 3-5 arguments.\n";
+		return false;
 	}
 
 	// err - obj8 record at stupid place in file
@@ -841,16 +846,23 @@ void ParseFullPackage(const std::string &content, CSLPackage_t &package)
 				if (!result)
 				{
 					XPLMDump(packageFilePath, lineNum, line) << XPMP_CLIENT_NAME " Ignoring package due to previous errors!\n";
-					break;
+					package.planes.back().hasErrors = true;
 				}
 			}
 			else
 			{
 				XPLMDump(packageFilePath, lineNum, line) << XPMP_CLIENT_NAME " Ignoring package due to unknown command!\n";
-				break;
+				package.planes.back().hasErrors = true;
 			}
 		}
 	}
+
+    // Remove all planes with errors
+    auto it = std::remove_if(package.planes.begin(), package.planes.end(), [](const CSLPlane_t &plane)
+    {
+        return plane.hasErrors;
+    });
+    package.planes.erase(it, package.planes.end());
 }
 
 bool isPackageAlreadyLoaded(const std::string &packagePath)

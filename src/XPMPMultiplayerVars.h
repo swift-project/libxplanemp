@@ -153,6 +153,7 @@ struct	CSLPlane_t {
 
 	bool isXsbVertOffsetAvail = false;
 	double xsbVertOffset = 0.0;
+	bool hasErrors = false;
 };
 
 // These enums define the eight levels of matching we might possibly
