@@ -476,7 +476,10 @@ bool ParseObj8AircraftCommand(const std::vector<std::string> &tokens, CSLPackage
 	if (tokens.size() != 2)
 	{
 		XPLMDump(path, lineNum, line) << XPMP_CLIENT_NAME " WARNING: OBJ8_AIRCRAFT command takes 1 argument.\n";
-		return false;
+		if (tokens.size() < 2)
+		{
+			return false;
+		}
 	}
 
 	package.planes.back().plane_type = plane_Obj8;
