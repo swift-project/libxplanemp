@@ -36,6 +36,11 @@ inline void writeFileContent(const std::string &filename, const std::string &con
 	out << content;
 }
 
+inline bool fileExists(const std::string &filename)
+{
+	return std::filebuf().open(filename, std::ifstream::in | std::ifstream::binary);
+}
+
 // trim from start (in place)
 static inline void ltrim(std::string &s)
 {

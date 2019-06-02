@@ -202,21 +202,7 @@ void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, bool
 				XPLMDebugString("(");
 				XPLMDebugString(fileNameToLoad.c_str());
 				XPLMDebugString(")\n");
-
-                auto extendedCallback = [=](const Obj8Manager::ResourceHandle &resourceHandle)
-                {
-                    callback(resourceHandle);
-                    char xsystem[1024];
-                    XPLMGetSystemPath(xsystem);
-                    std::string fullPath = std::string(xsystem) + destObjFile;
-                    int res = std::remove(fullPath.c_str());
-                    if (res)
-                    {
-                        XPLMDebugString(std::string(XPMP_CLIENT_NAME" Warning: Can't delete temporary created obj8 file. The file: " + fullPath + "\n").c_str());
-                    }
-                };
-
-                xplmLoadAsync(fileNameToLoad, extendedCallback);
+                xplmLoadAsync(fileNameToLoad, callback);
 			});
 		}
 		else
@@ -337,7 +323,7 @@ void obj_deinit()
 bool cloneObj8WithDifferentTexture(const std::string &sourceFileName, const std::string &targetFileName, const std::string &textureFile, const std::string &litTextureFile)
 {
 	// copy and edit new object
-	if (!textureFile.empty())
+	if (!textureFile.empty() && !fileExists(targetFileName))
 	{
 		std::string srcObjContent = getFileContent(sourceFileName);
 		if (srcObjContent.empty())
