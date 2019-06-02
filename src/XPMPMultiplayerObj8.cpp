@@ -361,39 +361,35 @@ bool cloneObj8WithDifferentTexture(const std::string &sourceFileName, const std:
 
 			trim(line);
 			std::vector<std::string> tokens = tokenize(line);
-			if (!textureHasWritten || !litTextureHasWritten)
+			if (tokens.size() >= 2)
 			{
-				if (tokens.size() >= 2 && tokens[0] == "TEXTURE")
+				if (tokens[0] == "TEXTURE")
 				{
-					sout << "TEXTURE " << textureFile << std::endl;
+					if (!textureHasWritten) { sout << "TEXTURE " << textureFile << std::endl; }
 					textureHasWritten = true;
 					continue;
 				}
-				if (tokens.size() >= 2 && tokens[0] == "TEXTURE_LIT")
+				if (tokens[0] == "TEXTURE_LIT")
 				{
-					sout << "TEXTURE_LIT " << litTextureFile << std::endl;
+					if (!litTextureHasWritten) { sout << "TEXTURE_LIT " << litTextureFile << std::endl; }
 					litTextureHasWritten = true;
 					continue;
 				}
-				if (tokens.size() >= 2
-					&& (tokens[0] == "VT"
-						|| tokens[0] == "VLINE"
-						|| tokens[0] == "VLIGHT"
-						|| tokens[0] == "IDX"
-						|| tokens[0] == "IDX10")
-					)
+				if (tokens[0] == "VT"
+					|| tokens[0] == "VLINE"
+					|| tokens[0] == "VLIGHT"
+					|| tokens[0] == "IDX"
+					|| tokens[0] == "IDX10")
 				{
 					if (!textureHasWritten)
 					{
 						sout << "TEXTURE " << textureFile << std::endl;
 						textureHasWritten = true;
-						continue;
 					}
 					if (!litTextureHasWritten)
 					{
 						sout << "TEXTURE_LIT " << litTextureFile << std::endl;
 						litTextureHasWritten = true;
-						continue;
 					}
 				}
 			}
