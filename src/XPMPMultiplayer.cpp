@@ -336,10 +336,10 @@ const  char * XPMPMultiplayerEnable(void)
 
 		// Register the plane control calls.
 		XPLMRegisterDrawCallback(XPMPControlPlaneCount,
-			xplm_Phase_Gauges, 0, /* after*/ 0 /* hide planes*/);
+			xplm_Phase_Airplanes, 0, /* after*/ 0 /* hide planes*/);
 
 		XPLMRegisterDrawCallback(XPMPControlPlaneCount,
-			xplm_Phase_Gauges, 1, /* before */ (void *) -1 /* show planes*/);
+			xplm_Phase_Airplanes, 1, /* before */ (void *) -1 /* show planes*/);
 	} else {
 		gHasControlOfAIAircraft = false;
 		XPLMDebugString("WARNING: " XPMP_CLIENT_LONGNAME " did not acquire multiplayer planes!!\n");
@@ -366,8 +366,8 @@ void XPMPMultiplayerDisable(void)
 		XPLMReleasePlanes();
 		gHasControlOfAIAircraft = false;
 
-		XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Gauges, 0, 0);
-		XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Gauges, 1, (void *) -1);
+		XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Airplanes, 0, 0);
+		XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Airplanes, 1, (void *) -1);
 	}
 
 	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, 0);
@@ -747,9 +747,9 @@ int	XPMPControlPlaneCount(
 	}
 	if (inRefcon == NULL)
 	{
-		XPLMSetActiveAircraftCount(1);
-	} else {
 		XPLMSetActiveAircraftCount(gEnableCount);
+	} else {
+		XPLMSetActiveAircraftCount(1);
 	}
 	return 1;
 }
