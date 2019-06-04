@@ -311,6 +311,16 @@ struct	PlaneToRender_t {
 };
 typedef	std::map<float, PlaneToRender_t>	RenderMap;
 
+// We calculate the screen coordinates during 3D rendering
+// and actually draw the labels during 2D rendering,
+// so we need to store the coordinates somewhere:
+struct LabelToRender_t {
+	float x;
+	float y;
+	const char *text;
+};
+std::vector<LabelToRender_t> gLabels;
+
 
 void			XPMPDefaultPlaneRenderer(int is_blend)
 {
@@ -711,6 +721,8 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	
 	// PASS 4 - Labels
 	if(is_blend)
+	{
+		gLabels.clear();
 		if ( gDrawLabels )
 		{
 			float	x_scale = 1.0;
@@ -752,20 +764,15 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				y_scale = 1.0;
 			}
 
-			float c[4] = { 1, 1, 0, 1 };
-
 			for (RenderMap::iterator iter = myPlanes.begin(); iter != myPlanes.end(); ++iter)
 				if(iter->first < labelDist)
 					if(!iter->second.cull)		// IMPORTANT - airplane BEHIND us still maps XY onto screen...so we get 180 degree reflections.  But behind us acf are culled, so that's good.
 					{
-						float x, y;
-						convert_to_2d(&gl_camera, vp, iter->second.x, iter->second.y, iter->second.z, 1.0, &x, &y);
-
-						float rat = 1.0f - (iter->first / static_cast<float>(labelDist));
-						c[0] = c[1] = 0.5f + 0.5f * rat;
-						c[2] = 0.5f - 0.5f * rat;		// gray -> yellow - no alpha in the SDK - foo!
-
-						XPLMDrawString(c, static_cast<int>(x / x_scale), static_cast<int>(y / y_scale)+10, (char *) iter->second.plane->pos.label, NULL, xplmFont_Basic);
+						gLabels.push_back({});
+						convert_to_2d(&gl_camera, vp, iter->second.x, iter->second.y, iter->second.z, 1.0, &gLabels.back().x, &gLabels.back().y);
+						gLabels.back().x /= x_scale;
+						gLabels.back().y /= y_scale;
+						gLabels.back().text = iter->second.plane->pos.label;
 					}
 
 			glMatrixMode(GL_PROJECTION);
@@ -774,6 +781,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			glPopMatrix();
 
 		}
+	}
 
 	
 	// Final hack - leave a note to ourselves for how many of Austin's planes we relocated to do TCAS.
@@ -785,6 +793,20 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 
 	// finally, cleanup textures.
 	OBJ_MaintainTextures();
+}
+
+void XPMPDefaultLabelRenderer()
+{
+	if (gDrawLabels)
+	{
+		XPLMSetGraphicsState(0, 0, 0, 0, 1, 1, 0);
+		float color[4] = { 1, 1, 0, 1 };
+
+		for (const auto &label : gLabels)
+		{
+			XPLMDrawString(color, static_cast<int>(label.x), static_cast<int>(label.y) + 10, const_cast<char *>(label.text), nullptr, xplmFont_Basic);
+		}
+	}
 }
 
 void XPMPEnableAircraftLabels()

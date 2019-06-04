@@ -99,6 +99,12 @@ static	int				XPMPRenderMultiplayerPlanes(
 		int                  inIsBefore,
 		void *               inRefcon);
 
+// This drawing hook is called once per frame to draw the plane labels.
+static	int				XPMPRenderPlaneLabels(
+		XPLMDrawingPhase     inPhase,
+		int                  inIsBefore,
+		void *               inRefcon);
+
 // This drawing hook is called twice per frame to control how many planes
 // should be visible.
 static	int				XPMPControlPlaneCount(
@@ -345,6 +351,10 @@ const  char * XPMPMultiplayerEnable(void)
 	XPLMRegisterDrawCallback(XPMPRenderMultiplayerPlanes,
 		xplm_Phase_Airplanes, 0, /* after*/ 0 /* refcon */);
 
+	// Register the label drawing func.
+	XPLMRegisterDrawCallback(XPMPRenderPlaneLabels,
+							 xplm_Phase_Window, 1 /* before */, 0 /* refcon */);
+
 	XPLMRegisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, -1, &gThreadSynchronizer);
 
 	return "";
@@ -361,6 +371,7 @@ void XPMPMultiplayerDisable(void)
 	}
 
 	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, 0);
+	XPLMUnregisterDrawCallback(XPMPRenderPlaneLabels, xplm_Phase_Window, 1, 0);
 	XPLMUnregisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, &gThreadSynchronizer);
 }
 
@@ -766,6 +777,17 @@ int	XPMPRenderMultiplayerPlanes(
 		XPMPDefaultPlaneRenderer(is_shadow ? 0 : is_blend);
 	if(!is_shadow)
 		is_blend = 1 - is_blend;
+	return 1;
+}
+
+// This routine draws the plane labels.
+int	XPMPRenderPlaneLabels(
+		XPLMDrawingPhase     /*inPhase*/,
+		int                  /*inIsBefore*/,
+		void *               /*inRefcon*/)
+{
+	if (!gRenderer)
+		XPMPDefaultLabelRenderer();
 	return 1;
 }
 

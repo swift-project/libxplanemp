@@ -30,6 +30,7 @@
 
 void 			XPMPInitDefaultPlaneRenderer(void);
 void			XPMPDefaultPlaneRenderer(int is_blend);
+void			XPMPDefaultLabelRenderer();
 void			XPMPDeinitDefaultPlaneRenderer(void);
 
 double getCorrectYValue(double inX, double inY, double inZ, double inModelOffset, bool inIsClampingOn);
