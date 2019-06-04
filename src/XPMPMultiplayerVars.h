@@ -246,6 +246,8 @@ struct	XPMPPlane_t {
 	TextureHandle               texHandle;
 	TextureHandle               texLitHandle;
 
+	int						tcasIndex = -1;
+
 	std::map<Obj8Info_t, OBJ8Handle> obj8Handles;
 	std::atomic_bool					allObj8Loaded = { false };
 };

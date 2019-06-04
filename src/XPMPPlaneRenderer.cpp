@@ -66,9 +66,21 @@
 
 extern bool	gHasControlOfAIAircraft;
 
-std::vector<XPLMDataRef>			gMultiRef_X;
-std::vector<XPLMDataRef>			gMultiRef_Y;
-std::vector<XPLMDataRef>			gMultiRef_Z;
+struct MultiplayerDatarefs_t {
+	XPLMDataRef x = nullptr;
+	XPLMDataRef y = nullptr;
+	XPLMDataRef z = nullptr;
+	XPLMDataRef pitch = nullptr;	// theta
+	XPLMDataRef roll = nullptr;		// phi
+	XPLMDataRef heading = nullptr;	// psi
+	bool isReserved = false;		// plane index is used?
+	bool ok() const { return x && y && z && pitch && roll && heading; }
+};
+std::vector<MultiplayerDatarefs_t> gMultiRefs;
+bool isValidTcasIndex(int i)
+{
+    return i >= 0 && i < static_cast<int>(gMultiRefs.size());
+}
 
 bool gDrawLabels = true;
 
@@ -256,21 +268,23 @@ void			XPMPInitDefaultPlaneRenderer(void)
 
 	int 		n = 1;
 	char		buf[100];
-	XPLMDataRef	d;
+	MultiplayerDatarefs_t	d;
 	while (1)
 	{
 		sprintf(buf,"sim/multiplayer/position/plane%d_x", n);
-		d = XPLMFindDataRef(buf);
-		if (!d) break;
-		gMultiRef_X.push_back(d);
+		d.x = XPLMFindDataRef(buf);
 		sprintf(buf,"sim/multiplayer/position/plane%d_y", n);
-		d = XPLMFindDataRef(buf);
-		if (!d) break;
-		gMultiRef_Y.push_back(d);
+		d.y = XPLMFindDataRef(buf);
 		sprintf(buf,"sim/multiplayer/position/plane%d_z", n);
-		d = XPLMFindDataRef(buf);
-		if (!d) break;
-		gMultiRef_Z.push_back(d);
+		d.z = XPLMFindDataRef(buf);
+		sprintf(buf,"sim/multiplayer/position/plane%d_the", n);
+		d.pitch = XPLMFindDataRef(buf);
+		sprintf(buf,"sim/multiplayer/position/plane%d_phi", n);
+		d.roll = XPLMFindDataRef(buf);
+		sprintf(buf,"sim/multiplayer/position/plane%d_psi", n);
+		d.heading = XPLMFindDataRef(buf);
+		if (!d.ok()) break;
+		gMultiRefs.push_back(d);
 		++n;
 	}
 }
@@ -363,9 +377,8 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	gTotPlanes = planeCount;
 	gNavPlanes = gACFPlanes = gOBJPlanes = 0;
 
-	int modelCount, active, plugin, tcas;
+	int modelCount, active, plugin;
 	XPLMCountAircraft(&modelCount, &active, &plugin);
-	tcas = modelCount - 1;	// This is how many tcas blips we can have!
 
 	RenderMap						myPlanes;		// Planes - sorted by distance so we can do the closest N and bail
 	
@@ -411,8 +424,10 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 														static_cast<float>(z)));
 			
 			// If the plane is farther than our TCAS range, it's just not visible.  Drop it!
-			if (distMeters > kMaxDistTCAS)
+			if (distMeters > kMaxDistTCAS) {
+				static_cast<XPMPPlanePtr>(id)->tcasIndex = -1;
 				continue;
+			}
 
 			// Only draw if it's in range.
 			bool cull = (distMeters > maxDist);
@@ -455,6 +470,10 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 					x, y, z, pos.pitch, pos.roll, pos.heading);
 			XPLMDebugString(debug);
 #endif
+
+			if (!tcas) {
+				static_cast<XPMPPlanePtr>(id)->tcasIndex = -1;
+			}
 
 			// Stash one render record with the plane's position, etc.
 			{
@@ -509,6 +528,32 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 
 	if (gDumpOneRenderCycle)
 		XPLMDebugString("End of cycle dump.\n");
+
+	/************************************************************************************
+	 * Prepare multiplayer indexes for TCAS
+	 ************************************************************************************/
+
+	if (gHasControlOfAIAircraft)
+	{
+		// reset slot reservations
+		for (auto &ref : gMultiRefs)
+			ref.isReserved = false;
+
+		// re-reserve slots already used by planes in range, from the previous frame
+		std::size_t blips = 0;
+		for (const auto &pair : myPlanes)
+		{
+			if (blips >= gMultiRefs.size()) break;
+
+			if (pair.second.tcas)
+			{
+				auto p = pair.second.plane;
+				if (isValidTcasIndex(p->tcasIndex))
+					gMultiRefs[p->tcasIndex].isReserved = true;
+				blips++;
+			}
+		}
+	}
 	
 	/************************************************************************************
 	 * ACTUAL RENDERING LOOP
@@ -521,6 +566,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	// OGL order.
 	
 	size_t	renderedCounter = 0;
+	int		lastMultiRefUsed = 0;
 
 	vector<PlaneToRender_t *>			planes_obj_lites;
 	multimap<int, PlaneToRender_t *>	planes_austin;
@@ -599,12 +645,29 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		}
 
 		// TCAS handling - if the plane needs to be drawn on TCAS and we haven't yet, move one of Austin's planes.
-		if (iter->second.tcas && renderedCounter < gMultiRef_X.size() && gHasControlOfAIAircraft)
+		if (iter->second.tcas && renderedCounter < gMultiRefs.size() && gHasControlOfAIAircraft)
 		{
-			XPLMSetDataf(gMultiRef_X[renderedCounter], iter->second.x);
-			XPLMSetDataf(gMultiRef_Y[renderedCounter], iter->second.y);
-			XPLMSetDataf(gMultiRef_Z[renderedCounter], iter->second.z);
-			++renderedCounter;
+			int index = iter->second.plane->tcasIndex;
+			if (!isValidTcasIndex(index))
+			{
+				// no index assigned, so find first unreserved index
+				for (index = 0; isValidTcasIndex(index) && gMultiRefs[index].isReserved; ++index)
+				{}
+			}
+			if (isValidTcasIndex(index))
+			{
+				XPLMSetDataf(gMultiRefs[index].x, iter->second.x);
+				XPLMSetDataf(gMultiRefs[index].y, iter->second.y);
+				XPLMSetDataf(gMultiRefs[index].z, iter->second.z);
+				XPLMSetDataf(gMultiRefs[index].pitch, iter->second.plane->pos.pitch);
+				XPLMSetDataf(gMultiRefs[index].roll, iter->second.plane->pos.roll);
+				XPLMSetDataf(gMultiRefs[index].heading, iter->second.plane->pos.heading);
+				gMultiRefs[index].isReserved = true;
+				iter->second.plane->tcasIndex = index;
+				if (index > lastMultiRefUsed)
+				    lastMultiRefUsed = index;
+				++renderedCounter;
+			}
 		}
 	}
 	
@@ -785,9 +848,20 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 
 	
 	// Final hack - leave a note to ourselves for how many of Austin's planes we relocated to do TCAS.
-	if (tcas > static_cast<int>(renderedCounter))
-		tcas = static_cast<int>(renderedCounter);
-	gEnableCount = (tcas+1);
+	gEnableCount = (lastMultiRefUsed+1);
+	// cleanup unused multiplayer datarefs
+	if (gHasControlOfAIAircraft) {
+		for (auto &ref : gMultiRefs) {
+			if (!ref.isReserved) {
+				XPLMSetDataf(ref.x, 0);
+				XPLMSetDataf(ref.y, 0);
+				XPLMSetDataf(ref.z, 0);
+				XPLMSetDataf(ref.pitch, 0);
+				XPLMSetDataf(ref.roll, 0);
+				XPLMSetDataf(ref.heading, 0);
+			}
+		}
+	}
 	
 	gDumpOneRenderCycle = 0;
 
