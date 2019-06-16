@@ -430,6 +430,8 @@ bool ParseTextureCommand(const std::vector<std::string> &tokens, CSLPackage_t &p
 
 bool ParseAircraftCommand(const std::vector<std::string> &tokens, CSLPackage_t &package, const string& path, int lineNum, const string& line)
 {
+	package.planes.push_back(CSLPlane_t());
+
 	// AIRCAFT <min> <max> <path>
 	if (tokens.size() != 4)
 	{
@@ -451,7 +453,6 @@ bool ParseAircraftCommand(const std::vector<std::string> &tokens, CSLPackage_t &
 			XPLMDump(path, lineNum, line) << XPMP_CLIENT_NAME " WARNING: package not found.\n";
 			return false;
 		}
-		package.planes.push_back(CSLPlane_t());
 		//! \todo Fill in acf model name information
 		package.planes.back().plane_type = plane_Austin;
 		package.planes.back().file_path = absolutePath;
