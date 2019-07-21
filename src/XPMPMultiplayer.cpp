@@ -522,6 +522,7 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 		if (cslPlane != package.planes.end())
 		{
 			plane->model = &(*cslPlane);
+			break;
 		}
 	}
 
@@ -530,6 +531,9 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 		XPLMDebugString("Requested model ");
 		XPLMDebugString(inModelName);
 		XPLMDebugString(" is unknown! Falling back to own model matching.");
+		if (inICAOCode) { XPLMDebugString(" Acft ");    XPLMDebugString(inICAOCode); }
+		if (inAirline)  { XPLMDebugString(" Airline "); XPLMDebugString(inAirline);  }
+		if (inLivery)   { XPLMDebugString(" Livery ");  XPLMDebugString(inLivery);   }
 		XPLMDebugString("\n");
 		return XPMPCreatePlane(inICAOCode, inAirline, inLivery, inDataFunc, inPlaneLoadedFunc, inRefcon);
 	}
@@ -549,12 +553,30 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 
 	if (planePtr->model->plane_type == plane_Obj)
 	{
+		XPLMDebugString(XPMP_CLIENT_NAME ": Start loading OBJ7 ");
+		XPLMDebugString("(");
+		XPLMDebugString(inModelName);
+		XPLMDebugString(")\n");
+
 		OBJ_LoadModelAsync(plane);
 	}
 	else if (planePtr->model->plane_type == plane_Obj8)
 	{
+		XPLMDebugString(XPMP_CLIENT_NAME ": Start loading OBJ8 ");
+		XPLMDebugString("(");
+		XPLMDebugString(inModelName);
+		XPLMDebugString(")\n");
+
 		OBJ_LoadObj8Async(plane);
 	}
+	else
+	{
+		XPLMDebugString(XPMP_CLIENT_NAME ": Unknown model type ");
+		XPLMDebugString("(");
+		XPLMDebugString(inModelName);
+		XPLMDebugString(")\n");
+	}
+
 	return planePtr;
 }
 
