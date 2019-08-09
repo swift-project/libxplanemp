@@ -447,7 +447,7 @@ void OBJ8_DrawModel(XPMPPlane_t *plane, double inX, double inY, double inZ, doub
 	}
 
 	static XPLMDataRef night_lighting_ref = XPLMFindDataRef("sim/graphics/scenery/percent_lights_on");
-	bool use_night = XPLMGetDataf(night_lighting_ref) > 0.25;
+	bool use_night = (plane->useNightTexture < 0) ? XPLMGetDataf(night_lighting_ref) > 0.25f : static_cast<bool>(plane->useNightTexture);
 
 	XPLMDrawInfo_t drawInfo;
 

@@ -416,6 +416,7 @@ XPMPPlaneID	XPMPCreatePlaneWithModelName(
 		const char *			inICAOCode,
 		const char *			inAirline,
 		const char *			inLivery,
+		const char *			inNightTextureMode,
 		XPMPPlaneData_f			inDataFunc,
 		XPMPPlaneLoaded_f		inPlaneLoadedFunc,
 		void *                  inRefcon);

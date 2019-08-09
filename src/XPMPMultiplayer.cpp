@@ -505,7 +505,7 @@ bool CompareCaseInsensitive(const string &a, const string &b)
 	return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](char aa, char bb) { return toupper(aa) == toupper(bb); });
 }
 
-XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char *inICAOCode, const char *inAirline, const char *inLivery, XPMPPlaneData_f inDataFunc, XPMPPlaneLoaded_f inPlaneLoadedFunc, void *inRefcon)
+XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char *inICAOCode, const char *inAirline, const char *inLivery, const char *inNightTextureMode, XPMPPlaneData_f inDataFunc, XPMPPlaneLoaded_f inPlaneLoadedFunc, void *inRefcon)
 {
 	auto plane = std::make_shared<XPMPPlane_t>();
 	plane->icao = inICAOCode;
@@ -514,6 +514,10 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 	plane->dataFunc = inDataFunc;
 	plane->planeLoadedFunc = inPlaneLoadedFunc;
 	plane->ref = inRefcon;
+	plane->useNightTexture = -1;
+
+	if (inNightTextureMode && strncmp(inNightTextureMode, "d", 1) == 0) { plane->useNightTexture = 0; }
+	else if (inNightTextureMode && strncmp(inNightTextureMode, "n", 1) == 0) { plane->useNightTexture = 1; }
 
 	// Find the model
 	for (auto &package : gPackages)

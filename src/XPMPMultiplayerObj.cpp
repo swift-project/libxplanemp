@@ -677,7 +677,7 @@ void	OBJ_PlotModel(XPMPPlane_t *plane, float inDistance, double /*inX*/,
 		return;
 
 	static XPLMDataRef	night_lighting_ref = XPLMFindDataRef("sim/graphics/scenery/percent_lights_on");
-	bool	use_night = XPLMGetDataf(night_lighting_ref) > 0.25;
+	bool use_night = plane->useNightTexture < 0 ? XPLMGetDataf(night_lighting_ref) > 0.25f : static_cast<bool>(plane->useNightTexture);
 
 	int tex = 0;
 	int lit = 0;

@@ -247,6 +247,7 @@ struct	XPMPPlane_t {
 	TextureHandle               texLitHandle;
 
 	int						tcasIndex = -1;
+	int						useNightTexture = -1; // -1 .. auto, from data ref "sim/graphics/scenery/percent_lights_on", 0 .. no, 1.. yes
 
 	std::map<Obj8Info_t, OBJ8Handle> obj8Handles;
 	std::atomic_bool					allObj8Loaded = { false };
