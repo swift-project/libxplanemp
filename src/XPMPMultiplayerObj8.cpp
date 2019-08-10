@@ -469,14 +469,9 @@ void OBJ8_DrawModel(XPMPPlane_t *plane, double inX, double inY, double inZ, doub
 	for (const auto &pair : plane->obj8Handles)
 	{
 		auto obj8Handle = std::atomic_load(&pair.second);
-		if (pair.first.drawType == draw_glass && blend)
+		if ((pair.first.drawType == draw_glass) == blend)
 		{
-			// Draw transluent
-			XPLMDrawObjects(obj8Handle->objectRef, 1, &drawInfo, use_night, 0);
-		}
-		else
-		{
-			// Draw solid
+			// drawType is whether the object is glass or solid, and blend is whether we are currently drawing glass objects or solid objects
 			XPLMDrawObjects(obj8Handle->objectRef, 1, &drawInfo, use_night, 0);
 		}
 	}
