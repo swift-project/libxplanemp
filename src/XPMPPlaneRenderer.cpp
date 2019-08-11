@@ -346,6 +346,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 #endif
 	if (planeCount == 0)		// Quick exit if no one's around.
 	{
+		gLabels.clear();
 		if (gDumpOneRenderCycle)
 		{
 			gDumpOneRenderCycle = false;
