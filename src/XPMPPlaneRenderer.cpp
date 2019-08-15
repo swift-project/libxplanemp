@@ -740,28 +740,10 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				&(*planeIter)->state);
 		}
 	}
-	else
-	{
-		for (planeIter = planes_obj8.begin(); planeIter != planes_obj8.end(); ++planeIter)
-		{
-			CSL_DrawObject((*planeIter)->plane,
-				(*planeIter)->dist,
-				(*planeIter)->x,
-				(*planeIter)->y,
-				(*planeIter)->z,
-				(*planeIter)->plane->pos.pitch,
-				(*planeIter)->plane->pos.roll,
-				(*planeIter)->plane->pos.heading,
-				plane_Obj8_Transparent,
-				(*planeIter)->full ? 1 : 0,
-				(*planeIter)->plane->surface.lights,
-				&(*planeIter)->state);
-		}
-	}
 
 	// PASS 3 - draw OBJ lights.
-
 	if(is_blend)
+	{
 		if (!planes_obj_lites.empty())
 		{
 			OBJ_BeginLightDrawing();
@@ -782,8 +764,29 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 								&(*planeIter)->state);
 			}
 		}
+	}
+
+	// PASS 4 - draw translucent
+	if(is_blend)
+	{
+		for (planeIter = planes_obj8.begin(); planeIter != planes_obj8.end(); ++planeIter)
+		{
+			CSL_DrawObject((*planeIter)->plane,
+				(*planeIter)->dist,
+				(*planeIter)->x,
+				(*planeIter)->y,
+				(*planeIter)->z,
+				(*planeIter)->plane->pos.pitch,
+				(*planeIter)->plane->pos.roll,
+				(*planeIter)->plane->pos.heading,
+				plane_Obj8_Transparent,
+				(*planeIter)->full ? 1 : 0,
+				(*planeIter)->plane->surface.lights,
+				&(*planeIter)->state);
+		}
+	}
 	
-	// PASS 4 - Labels
+	// PASS 5 - Labels
 	if(is_blend)
 	{
 		gLabels.clear();
