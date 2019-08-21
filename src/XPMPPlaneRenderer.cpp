@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
+#include <bitset>
 
 #if IBM
 #include <GL/gl.h>
@@ -75,6 +76,15 @@ struct MultiplayerDatarefs_t {
 	XPLMDataRef heading = nullptr;	// psi
 	bool isReserved = false;		// plane index is used?
 	bool ok() const { return x && y && z && pitch && roll && heading; }
+	void resetValues() {
+		isReserved = false;
+		if (x) XPLMSetDataf(x, 0);
+		if (y) XPLMSetDataf(y, 0);
+		if (z) XPLMSetDataf(z, 0);
+		if (pitch)	XPLMSetDataf(pitch, 0);
+		if (roll)	XPLMSetDataf(roll, 0);
+        if (heading)	XPLMSetDataf(heading, 0);
+	}
 };
 std::vector<MultiplayerDatarefs_t> gMultiRefs;
 bool isValidTcasIndex(int i)
@@ -104,6 +114,10 @@ bool					gMSAAHackInitialised = false;
 static XPLMDataRef  	gMSAAXRatioRef = nullptr;
 static XPLMDataRef		gMSAAYRatioRef = nullptr;
 static XPLMDataRef      gHDROnRef = nullptr;
+
+static XPLMDataRef		gOwnPlaneX = nullptr;
+static XPLMDataRef		gOwnPlaneY = nullptr;
+static XPLMDataRef		gOwnPlaneZ = nullptr;
 
 static void
 init_cullinfo()
@@ -346,7 +360,9 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 #endif
 	if (planeCount == 0)		// Quick exit if no one's around.
 	{
+		for (auto &ref : gMultiRefs) { ref.resetValues(); }
 		gLabels.clear();
+		gEnableCount = 1;
 		if (gDumpOneRenderCycle)
 		{
 			gDumpOneRenderCycle = false;
@@ -362,6 +378,12 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		gHDROnRef      = XPLMFindDataRef("sim/graphics/settings/HDR_on");
 	}
 
+	if (!gOwnPlaneX) {
+		gOwnPlaneX = XPLMFindDataRef("sim/flightmodel/position/local_x");
+		gOwnPlaneY = XPLMFindDataRef("sim/flightmodel/position/local_y");
+		gOwnPlaneZ = XPLMFindDataRef("sim/flightmodel/position/local_z");
+	}
+
 	cull_info_t			gl_camera;
 	setup_cull_info(&gl_camera);
 	XPLMCameraPosition_t x_camera;
@@ -370,10 +392,10 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 
 	// Culling - read the camera pos«and figure out what's visible.
 
-	double	maxDist = XPLMGetDataf(gVisDataRef);
-	double  labelDist = min(maxDist, MAX_LABEL_DIST) * x_camera.zoom;		// Labels get easier to see when users zooms.
-	double	fullPlaneDist = x_camera.zoom * (5280.0 / 3.2) * (gFloatPrefsFunc ? gFloatPrefsFunc("planes","full_distance", 3.0) : 3.0);	// Only draw planes fully within 3 miles.
-	int		maxFullPlanes = gIntPrefsFunc ? gIntPrefsFunc("planes","max_full_count", 100) : 100;						// Draw no more than 100 full planes!
+	const double	maxDist = XPLMGetDataf(gVisDataRef);
+	const double	labelDist = min(maxDist, MAX_LABEL_DIST) * x_camera.zoom;		// Labels get easier to see when users zooms.
+	const double	fullPlaneDist = x_camera.zoom * (5280.0 / 3.2) * (gFloatPrefsFunc ? gFloatPrefsFunc("planes","full_distance", 3.0) : 3.0);	// Only draw planes fully within 3 miles.
+	const int		maxFullPlanes = gIntPrefsFunc ? gIntPrefsFunc("planes","max_full_count", 100) : 100;						// Draw no more than 100 full planes!
 
 	gTotPlanes = planeCount;
 	gNavPlanes = gACFPlanes = gOBJPlanes = 0;
@@ -416,22 +438,27 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		{
 			// First figure out where the plane is!
 
-			double	x,y,z;
+			double	x,y,z; // other plane x y z
+			const double ownX = XPLMGetDatad(gOwnPlaneX);
+			const double ownY = XPLMGetDatad(gOwnPlaneY);
+			const double ownZ = XPLMGetDatad(gOwnPlaneZ);
+
 			XPLMWorldToLocal(pos.lat, pos.lon, pos.elevation * kFtToMeters, &x, &y, &z);
+
+			const double deltaOwnX = x-ownX;
+			const double deltaOwnY = y-ownY;
+			const double deltaOwnZ = z-ownZ;
 			
-			float distMeters = sqrt(sphere_distance_sqr(&gl_camera,
-														static_cast<float>(x),
-														static_cast<float>(y),
-														static_cast<float>(z)));
+			const float cameraDistMeters = sqrt(sphere_distance_sqr(&gl_camera,
+												static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
+			const double ownAircraftDistMeters = sqrt(deltaOwnX*deltaOwnX + deltaOwnY*deltaOwnY + deltaOwnZ*deltaOwnZ);
 			
-			// If the plane is farther than our TCAS range, it's just not visible.  Drop it!
-			if (distMeters > kMaxDistTCAS) {
-				static_cast<XPMPPlanePtr>(id)->tcasIndex = -1;
-				continue;
-			}
+			// If the plane is farther than our TCAS range, it has no TCAS index
+			if (ownAircraftDistMeters > kMaxDistTCAS) { static_cast<XPMPPlanePtr>(id)->tcasIndex = -1; }
+			if (cameraDistMeters > kMaxDistTCAS) { continue; } // aircraft are not shown outside TCAS distance
 
 			// Only draw if it's in range.
-			bool cull = (distMeters > maxDist);
+			bool cull = (cameraDistMeters > maxDist);
 			
 			XPMPPlaneRadar_t radar;
 			radar.size = sizeof(radar);
@@ -458,7 +485,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			}
 			
 			// Full plane or lites based on distance.
-			bool	drawFullPlane = (distMeters < fullPlaneDist);
+			const bool	drawFullPlane = (cameraDistMeters < fullPlaneDist);
 			
 #if DEBUG_RENDERER
 
@@ -472,10 +499,6 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			XPLMDebugString(debug);
 #endif
 
-			if (!tcas) {
-				static_cast<XPMPPlanePtr>(id)->tcasIndex = -1;
-			}
-
 			// Stash one render record with the plane's position, etc.
 			{
 				PlaneToRender_t		renderRecord;
@@ -484,7 +507,8 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				renderRecord.z = static_cast<float>(z);
 				renderRecord.plane = static_cast<XPMPPlanePtr>(id);
 				renderRecord.cull = cull;						// NO other planes.  Doing so causes a lot of things to go nuts!
-				renderRecord.tcas = tcas;
+				renderRecord.tcas = tcas; // tcas
+				if (!renderRecord.tcas) { renderRecord.plane->tcasIndex = -1; }
 
 				XPMPPlaneSurfaces_t	surfaces;
 				surfaces.size = sizeof(surfaces);
@@ -518,8 +542,8 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				if (renderRecord.plane->model && !renderRecord.plane->model->moving_gear)
 					renderRecord.plane->surface.gearPosition = 1.0;
 				renderRecord.full = drawFullPlane;
-				renderRecord.dist = distMeters;
-				myPlanes.insert(RenderMap::value_type(distMeters, renderRecord));
+				renderRecord.dist = cameraDistMeters;
+				myPlanes.insert(RenderMap::value_type(cameraDistMeters, renderRecord));
 
 			} // State calculation
 			
@@ -536,22 +560,66 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 
 	if (gHasControlOfAIAircraft)
 	{
-		// reset slot reservations
-		for (auto &ref : gMultiRefs)
-			ref.isReserved = false;
-
-		// re-reserve slots already used by planes in range, from the previous frame
 		std::size_t blips = 0;
-		for (const auto &pair : myPlanes)
+
+		// to avoid gaps in the indexes we create a vector of all indexes used and new ones
+		std::bitset<32> originalTCASIndexes; // init to 0, we never expect more than 19+1 values
+		std::size_t maxOriginalTcasIndex = 0;
+		for (auto &pair : myPlanes)
 		{
 			if (blips >= gMultiRefs.size()) break;
-
 			if (pair.second.tcas)
 			{
-				auto p = pair.second.plane;
-				if (isValidTcasIndex(p->tcasIndex))
-					gMultiRefs[p->tcasIndex].isReserved = true;
-				blips++;
+				++blips; // should be possible to create one as we checked range already
+				int index = pair.second.plane->tcasIndex;
+				if (!isValidTcasIndex(index)) {
+					// if it is a new one, try to find an index
+					for (index = 0; isValidTcasIndex(index) && gMultiRefs[index].isReserved; ++index)
+					{}
+				}
+                // already used one or valid new one?
+				if (!isValidTcasIndex(index)) { continue; }
+				pair.second.plane->tcasIndex = index;
+				const std::size_t i = static_cast<std::size_t>(index); // avoid compile issues with CLANG
+				originalTCASIndexes.set(i, true);
+				if (i > maxOriginalTcasIndex) { maxOriginalTcasIndex = i; }
+			}
+		}
+
+		if (blips > originalTCASIndexes.size()) { blips = 0; } // paranoia, avoid crash if bitset size is too small
+		const bool hasTcasIndexGaps = (maxOriginalTcasIndex >= blips && blips > 0);
+		static std::vector<std::size_t> originalTCASIndexGaps; // local static to amortize the cost of allocation
+		originalTCASIndexGaps.clear();
+		if (hasTcasIndexGaps) {
+			// find the gaps, those are the ones which are not in the blips range
+			for (std::size_t index = 0; index < blips; ++index) {
+				if (!originalTCASIndexes.test(index)) {
+					originalTCASIndexGaps.push_back(index);
+				}
+			}
+		}
+
+		// reset slot reservations
+		for (auto &ref : gMultiRefs) { ref.isReserved = false; }
+
+		// re-reserve slots already used by planes in range, from the previous frame
+		for (auto &pair : myPlanes)
+		{
+			if (pair.second.tcas)
+			{
+				int index = pair.second.plane->tcasIndex;
+				if (isValidTcasIndex(index)) {
+					std::size_t i = static_cast<std::size_t>(index); // avoid compile issues with CLANG
+					if (i >= blips) {
+						if (!originalTCASIndexGaps.empty()) {
+							// we now close the gaps by filling them with values from the end
+							i = originalTCASIndexGaps.front(); // first free gap
+							originalTCASIndexGaps.erase(originalTCASIndexGaps.begin());
+							pair.second.plane->tcasIndex = static_cast<int>(i); // now in the free gap
+						}
+					}
+					gMultiRefs[i].isReserved = true;
+				}
 			}
 		}
 	}
@@ -567,7 +635,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	// OGL order.
 	
 	size_t	renderedCounter = 0;
-	int		lastMultiRefUsed = 0;
+	int		lastMultiRefUsed = -1;
 
 	vector<PlaneToRender_t *>			planes_obj_lites;
 	multimap<int, PlaneToRender_t *>	planes_austin;
@@ -649,12 +717,6 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		if (iter->second.tcas && renderedCounter < gMultiRefs.size() && gHasControlOfAIAircraft)
 		{
 			int index = iter->second.plane->tcasIndex;
-			if (!isValidTcasIndex(index))
-			{
-				// no index assigned, so find first unreserved index
-				for (index = 0; isValidTcasIndex(index) && gMultiRefs[index].isReserved; ++index)
-				{}
-			}
 			if (isValidTcasIndex(index))
 			{
 				XPLMSetDataf(gMultiRefs[index].x, iter->second.x);
@@ -694,7 +756,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			else
 				++gNavPlanes;
 		}
-	
+
 	// PASS 2 - draw OBJs
 	// Blend for solid OBJ7s?  YES!  First, in HDR mode, they DO NOT draw to the gbuffer properly -
 	// they splat their livery into the normal map, which is terrifying and stupid.  Then they are also
@@ -812,7 +874,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				vp[1] = vpInt[1];
 				vp[2] = vpInt[2] - vpInt[0];
 				vp[3] = vpInt[3] - vpInt[1];
-			} else {		
+			} else {
 				glGetIntegerv(GL_VIEWPORT, vp);
 			}
 
@@ -824,7 +886,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 			glLoadIdentity();
-			if (x_scale > 1.0 || y_scale > 1.0) {
+			if (x_scale > 1.0f || y_scale > 1.0f) {
 				glScalef(x_scale, y_scale, 1.0);
 			} else {
 				x_scale = 1.0;
@@ -852,18 +914,11 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 
 	
 	// Final hack - leave a note to ourselves for how many of Austin's planes we relocated to do TCAS.
-	gEnableCount = (lastMultiRefUsed+1);
+	gEnableCount = (lastMultiRefUsed + 2); // +1 for counter, +1 for own aircraft
 	// cleanup unused multiplayer datarefs
 	if (gHasControlOfAIAircraft) {
 		for (auto &ref : gMultiRefs) {
-			if (!ref.isReserved) {
-				XPLMSetDataf(ref.x, 0);
-				XPLMSetDataf(ref.y, 0);
-				XPLMSetDataf(ref.z, 0);
-				XPLMSetDataf(ref.pitch, 0);
-				XPLMSetDataf(ref.roll, 0);
-				XPLMSetDataf(ref.heading, 0);
-			}
+			if (!ref.isReserved) { ref.resetValues(); }
 		}
 	}
 	
