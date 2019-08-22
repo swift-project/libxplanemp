@@ -86,13 +86,13 @@ struct MultiplayerDatarefs_t {
         if (heading)	XPLMSetDataf(heading, 0);
 	}
 };
-std::vector<MultiplayerDatarefs_t> gMultiRefs;
+static std::vector<MultiplayerDatarefs_t> gMultiRefs;
 bool isValidTcasIndex(int i)
 {
     return i >= 0 && i < static_cast<int>(gMultiRefs.size());
 }
 
-bool gDrawLabels = true;
+static bool gDrawLabels = true;
 
 struct cull_info_t {					// This struct has everything we need to cull fast!
 	float	model_view[16];				// The model view matrix, to get from local OpenGL to eye coordinates.
@@ -110,7 +110,7 @@ static XPLMDataRef		projectionMatrixRef = nullptr;
 static XPLMDataRef		modelviewMatrixRef = nullptr;
 static XPLMDataRef		viewportRef = nullptr;
 
-bool					gMSAAHackInitialised = false;
+static bool				gMSAAHackInitialised = false;
 static XPLMDataRef  	gMSAAXRatioRef = nullptr;
 static XPLMDataRef		gMSAAYRatioRef = nullptr;
 static XPLMDataRef      gHDROnRef = nullptr;
@@ -240,10 +240,9 @@ static	int		gACFPlanes = 0;			// Number of Austin's planes we drew in full
 static	int		gNavPlanes = 0;			// Number of Austin's planes we drew with lights only
 static	int		gOBJPlanes = 0;			// Number of our OBJ planes we drew in full
 
-static	XPLMDataRef		gVisDataRef = NULL;		// Current air visiblity for culling.
-static	XPLMDataRef		gAltitudeRef = NULL;	// Current aircraft altitude (for TCAS)
-
-static XPLMProbeRef terrainProbe = NULL; // Probe to probe where the ground is for clamping
+static	XPLMDataRef		gVisDataRef  = nullptr;		// Current air visiblity for culling.
+static	XPLMDataRef		gAltitudeRef = nullptr;;	// Current aircraft altitude (for TCAS)
+static	XPLMProbeRef	terrainProbe = nullptr;;	// Probe to probe where the ground is for clamping
 
 
 void			XPMPInitDefaultPlaneRenderer(void)
@@ -257,11 +256,11 @@ void			XPMPInitDefaultPlaneRenderer(void)
 		init_cullinfo();
 	}
 	gVisDataRef = XPLMFindDataRef("sim/graphics/view/visibility_effective_m");
-	if (gVisDataRef == NULL) gVisDataRef = XPLMFindDataRef("sim/weather/visibility_effective_m");
-	if (gVisDataRef == NULL)
+	if (!gVisDataRef) gVisDataRef = XPLMFindDataRef("sim/weather/visibility_effective_m");
+	if (!gVisDataRef)
 		XPLMDebugString("WARNING: Default renderer could not find effective visibility in the sim.\n");
 
-	if(gAltitudeRef == NULL) gAltitudeRef = XPLMFindDataRef("sim/flightmodel/position/elevation");
+	if(!gAltitudeRef) gAltitudeRef = XPLMFindDataRef("sim/flightmodel/position/elevation");
 
 #if RENDERER_STATS
 	XPLMRegisterDataAccessor("hack/renderer/planes", xplmType_Int, 0, GetRendererStat, NULL,
@@ -347,7 +346,7 @@ struct LabelToRender_t {
 	float y;
 	const char *text;
 };
-std::vector<LabelToRender_t> gLabels;
+static std::vector<LabelToRender_t> gLabels;
 
 
 void			XPMPDefaultPlaneRenderer(int is_blend)
@@ -704,9 +703,9 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				if (modelCount > 1)
 					if(!is_blend)
 						XPLMDrawAircraft(1,
-										 (float) iter->second.x, (float) iter->second.y, (float) iter->second.z,
-										 iter->second.plane->pos.pitch, iter->second.plane->pos.roll, iter->second.plane->pos.heading,
-										 iter->second.full ? 1 : 0, &iter->second.state);
+											static_cast<float>(iter->second.x), static_cast<float>(iter->second.y), static_cast<float>(iter->second.z),
+											iter->second.plane->pos.pitch, iter->second.plane->pos.roll, iter->second.plane->pos.heading,
+											iter->second.full ? 1 : 0, &iter->second.state);
 
 				glPopMatrix();
 			}
