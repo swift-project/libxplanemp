@@ -718,16 +718,17 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			int index = iter->second.plane->tcasIndex;
 			if (isValidTcasIndex(index))
 			{
-				XPLMSetDataf(gMultiRefs[index].x, iter->second.x);
-				XPLMSetDataf(gMultiRefs[index].y, iter->second.y);
-				XPLMSetDataf(gMultiRefs[index].z, iter->second.z);
-				XPLMSetDataf(gMultiRefs[index].pitch, iter->second.plane->pos.pitch);
-				XPLMSetDataf(gMultiRefs[index].roll, iter->second.plane->pos.roll);
-				XPLMSetDataf(gMultiRefs[index].heading, iter->second.plane->pos.heading);
-				gMultiRefs[index].isReserved = true;
+				const std::size_t i = static_cast<std::size_t>(index);
+				XPLMSetDataf(gMultiRefs[i].x, iter->second.x);
+				XPLMSetDataf(gMultiRefs[i].y, iter->second.y);
+				XPLMSetDataf(gMultiRefs[i].z, iter->second.z);
+				XPLMSetDataf(gMultiRefs[i].pitch, iter->second.plane->pos.pitch);
+				XPLMSetDataf(gMultiRefs[i].roll, iter->second.plane->pos.roll);
+				XPLMSetDataf(gMultiRefs[i].heading, iter->second.plane->pos.heading);
+				gMultiRefs[i].isReserved = true;
 				iter->second.plane->tcasIndex = index;
 				if (index > lastMultiRefUsed)
-				    lastMultiRefUsed = index;
+					lastMultiRefUsed = index;
 				++renderedCounter;
 			}
 		}
