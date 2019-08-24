@@ -89,7 +89,7 @@ struct MultiplayerDatarefs_t {
 static std::vector<MultiplayerDatarefs_t> gMultiRefs;
 bool isValidTcasIndex(int i)
 {
-    return i >= 0 && i < static_cast<int>(gMultiRefs.size());
+	return i >= 0 && i < static_cast<int>(gMultiRefs.size());
 }
 
 static bool gDrawLabels = true;
@@ -111,9 +111,9 @@ static XPLMDataRef		modelviewMatrixRef = nullptr;
 static XPLMDataRef		viewportRef = nullptr;
 
 static bool				gMSAAHackInitialised = false;
-static XPLMDataRef  	gMSAAXRatioRef = nullptr;
+static XPLMDataRef		gMSAAXRatioRef = nullptr;
 static XPLMDataRef		gMSAAYRatioRef = nullptr;
-static XPLMDataRef      gHDROnRef = nullptr;
+static XPLMDataRef		gHDROnRef = nullptr;
 
 static XPLMDataRef		gOwnPlaneX = nullptr;
 static XPLMDataRef		gOwnPlaneY = nullptr;
@@ -275,7 +275,7 @@ void			XPMPInitDefaultPlaneRenderer(void)
 	XPLMRegisterDataAccessor("hack/renderer/acfs", xplmType_Int, 0, GetRendererStat, NULL,
 							 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 							 &gACFPlanes, NULL);
-#endif		
+#endif
 
 	// We don't know how many multiplayer planes there are - fetch as many as we can.
 
@@ -407,7 +407,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	/************************************************************************************
 	 * CULLING AND STATE CALCULATION LOOP
 	 ************************************************************************************/
-	
+
 	if (gDumpOneRenderCycle)
 	{
 		XPLMDebugString("Dumping one cycle map of planes.\n");
@@ -423,7 +423,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			XPLMDebugString("\n");
 		}
 	}
-	
+
 	// Go through every plane.  We're going to figure out if it is visible and if so remember it for drawing later.
 	for (long index = 0; index < planeCount; ++index)
 	{
@@ -477,8 +477,8 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			// Cull if we exceed half the FOV.
 			
 			if(!cull && !sphere_is_visible(&gl_camera, static_cast<float>(x),
-										   static_cast<float>(y),
-										   static_cast<float>(z), 50.0))
+											static_cast<float>(y),
+											static_cast<float>(z), 50.0))
 			{
 				cull = true;
 			}
@@ -622,7 +622,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			}
 		}
 	}
-	
+
 	/************************************************************************************
 	 * ACTUAL RENDERING LOOP
 	 ************************************************************************************/
@@ -733,7 +733,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 			}
 		}
 	}
-	
+
 	// PASS 1 - draw Austin's planes.
 	if(gHasControlOfAIAircraft && !is_blend)
 		for (planeMapIter = planes_austin.begin(); planeMapIter != planes_austin.end(); ++planeMapIter)
