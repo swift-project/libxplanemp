@@ -55,7 +55,7 @@
 
 // Turn this on to get a lot of diagnostic info on who's visible, etc.
 #define		DEBUG_RENDERER 0
-#define		DEBUG_TCAS 1
+#define		DEBUG_TCAS 0
 // Turn this on to put rendering stats in datarefs for realtime observatoin.
 #define		RENDERER_STATS 0
 
@@ -502,7 +502,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				sprintf(debug,"TCAS plane %ld (%s/%s) at lle %f, %f, %f (xyz=%f, %f, %f) distance=%f\n", index, icao, livery,
 						pos.lat, pos.lon, pos.elevation, x, y, z, ownAircraftDistMeters);
 				XPLMDebugString(debug);
-				}
+			}
 #endif
 			// TCAS done here, do we need to continue
 			if (cameraDistMeters > kMaxDistTCAS) { continue; } // aircraft are not shown outside TCAS distance
@@ -630,7 +630,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 		// re-reserve slots already used by planes in range, from the previous frame
 #if DEBUG_TCAS
 		{
-			std::string debug = "TCAS blips " + std::to_string(blips) + " planes " + std::to_string(tcasPlanes.size()) + "\n";
+			const std::string debug = "TCAS blips " + std::to_string(blips) + " planes " + std::to_string(tcasPlanes.size()) + "\n";
 			XPLMDebugString(debug.c_str());
 		}
 #endif
@@ -652,7 +652,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 					gMultiRefs[i].isReserved = true;
 #if DEBUG_TCAS
 					{
-						std::string debug = "Reserving index " + std::to_string(i) + " in gMultiRefs\n";
+						const std::string debug = "Reserving index " + std::to_string(i) + " in gMultiRefs\n";
 						XPLMDebugString(debug.c_str());
 					}
 #endif
