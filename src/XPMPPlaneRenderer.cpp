@@ -93,6 +93,40 @@ bool isValidTcasIndex(int i)
 	return i >= 0 && i < static_cast<int>(gMultiRefs.size());
 }
 
+int DebugRenderPhase(XPLMDrawingPhase, int isBefore, void *refcon)
+{
+    const std::string prefix = isBefore ? "before" : "after";
+	const std::string phase = static_cast<const char *>(refcon);
+	const std::string message = "DEBUG: " + prefix + " " + phase + "\n";
+	XPLMDebugString(message.c_str());
+	return 1;
+}
+
+#define REGISTER_PHASE_DEBUG(phase) \
+XPLMRegisterDrawCallback(DebugRenderPhase, xplm_Phase_##phase, 1, static_cast<void *>(const_cast<char *>(#phase))); \
+XPLMRegisterDrawCallback(DebugRenderPhase, xplm_Phase_##phase, 0, static_cast<void *>(const_cast<char *>(#phase)));
+
+/**
+static void init_debugRenderPhases()
+{
+	REGISTER_PHASE_DEBUG(FirstScene)
+	REGISTER_PHASE_DEBUG(Terrain)
+	REGISTER_PHASE_DEBUG(Airports)
+	REGISTER_PHASE_DEBUG(Vectors)
+	REGISTER_PHASE_DEBUG(Objects)
+	REGISTER_PHASE_DEBUG(Airplanes)
+	REGISTER_PHASE_DEBUG(LastScene)
+	REGISTER_PHASE_DEBUG(FirstCockpit)
+	REGISTER_PHASE_DEBUG(Panel)
+	REGISTER_PHASE_DEBUG(Gauges)
+	REGISTER_PHASE_DEBUG(Window)
+	REGISTER_PHASE_DEBUG(LastCockpit)
+	REGISTER_PHASE_DEBUG(LocalMap3D)
+	REGISTER_PHASE_DEBUG(LocalMap2D)
+	REGISTER_PHASE_DEBUG(LocalMapProfile)
+}
+**/
+
 static bool gDrawLabels = true;
 
 struct cull_info_t {					// This struct has everything we need to cull fast!
@@ -127,7 +161,6 @@ static void init_cullinfo()
 	viewportRef = XPLMFindDataRef("sim/graphics/view/viewport");
 	gCullInfoInitialised = true;
 }
-
 
 static void setup_cull_info(cull_info_t * i)
 {
@@ -276,6 +309,8 @@ void			XPMPInitDefaultPlaneRenderer(void)
 							 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 							 &gACFPlanes, NULL);
 #endif
+
+	// init_debugRenderPhases(); // log all render phases if needed
 
 	// We don't know how many multiplayer planes there are - fetch as many as we can.
 
@@ -567,7 +602,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 					renderRecord.plane->surface.gearPosition = 1.0;
 				renderRecord.full = drawFullPlane;
 				renderRecord.dist = cameraDistMeters;
-                myPlanes.emplace(cameraDistMeters, renderRecord);
+				myPlanes.emplace(cameraDistMeters, renderRecord);
 
 			} // State calculation
 			
