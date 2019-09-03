@@ -120,8 +120,7 @@ static XPLMDataRef		gOwnPlaneX = nullptr;
 static XPLMDataRef		gOwnPlaneY = nullptr;
 static XPLMDataRef		gOwnPlaneZ = nullptr;
 
-static void
-init_cullinfo()
+static void init_cullinfo()
 {
 	modelviewMatrixRef = XPLMFindDataRef("sim/graphics/view/modelview_matrix");
 	projectionMatrixRef = XPLMFindDataRef("sim/graphics/view/projection_matrix");
