@@ -105,9 +105,14 @@ static	int				XPMPRenderPlaneLabels(
 		int                  inIsBefore,
 		void *               inRefcon);
 
-// This drawing hook is called twice per frame to control how many planes
-// should be visible.
-static	int				XPMPControlPlaneCount(
+// This drawing hook is called when we want to enable Austin's planes.
+static	int				XPMPEnablePlaneCount(
+		XPLMDrawingPhase     inPhase,
+		int                  inIsBefore,
+		void *               inRefcon);
+
+// This drawing hook is called when we want to disable Austin's planes.
+static	int				XPMPDisablePlaneCount(
 		XPLMDrawingPhase     inPhase,
 		int                  inIsBefore,
 		void *               inRefcon);
@@ -335,11 +340,11 @@ const  char * XPMPMultiplayerEnable(void)
 		XPLMCountAircraft(&total, &active, &who);
 
 		// Register the plane control calls.
-		XPLMRegisterDrawCallback(XPMPControlPlaneCount,
-			xplm_Phase_Gauges, 0, /* after*/ 0 /* hide planes*/);
+		XPLMRegisterDrawCallback(XPMPDisablePlaneCount,
+			xplm_Phase_Gauges, 0 /* after*/, nullptr);
 
-		XPLMRegisterDrawCallback(XPMPControlPlaneCount,
-			xplm_Phase_Gauges, 1, /* before */ reinterpret_cast<void*>(static_cast<std::intptr_t>(-1)) /* show planes*/);
+		XPLMRegisterDrawCallback(XPMPEnablePlaneCount,
+			xplm_Phase_Gauges, 1 /* before */, nullptr);
 	} else {
 		gHasControlOfAIAircraft = false;
 		XPLMDebugString("WARNING: " XPMP_CLIENT_LONGNAME " did not acquire multiplayer planes!!\n");
@@ -366,8 +371,8 @@ void XPMPMultiplayerDisable(void)
 		XPLMReleasePlanes();
 		gHasControlOfAIAircraft = false;
 
-		XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Gauges, 0, 0);
-		XPLMUnregisterDrawCallback(XPMPControlPlaneCount, xplm_Phase_Gauges, 1, reinterpret_cast<void*>(static_cast<std::intptr_t>(-1)));
+		XPLMUnregisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Gauges, 0, nullptr);
+		XPLMUnregisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_Gauges, 1, nullptr);
 	}
 
 	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, 0);
@@ -761,22 +766,28 @@ void		XPMPSetPlaneRenderer(
  * RENDERING
  ********************************************************************************/
 
-// This callback ping-pongs the multiplayer count up and back depending 
+// These callbacks ping-pong the multiplayer count up and back depending
 // on whether we're drawing the TCAS gauges or not.
-int	XPMPControlPlaneCount(
+int	XPMPEnablePlaneCount(
 		XPLMDrawingPhase     /*inPhase*/,
 		int                  /*inIsBefore*/,
-		void *               inRefcon)
+		void *               /*inRefcon*/)
 {
 	if (!gHasControlOfAIAircraft) {
 		return 1;
 	}
-	if (reinterpret_cast<std::intptr_t>(inRefcon) == 0)
-	{
-		XPLMSetActiveAircraftCount(1);
-	} else {
-		XPLMSetActiveAircraftCount(gEnableCount);
+	XPLMSetActiveAircraftCount(gEnableCount);
+	return 1;
+}
+int	XPMPDisablePlaneCount(
+		XPLMDrawingPhase     /*inPhase*/,
+		int                  /*inIsBefore*/,
+		void *               /*inRefcon*/)
+{
+	if (!gHasControlOfAIAircraft) {
+		return 1;
 	}
+	XPLMSetActiveAircraftCount(1);
 	return 1;
 }
 
