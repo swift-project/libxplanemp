@@ -106,7 +106,6 @@ int DebugRenderPhase(XPLMDrawingPhase, int isBefore, void *refcon)
 XPLMRegisterDrawCallback(DebugRenderPhase, xplm_Phase_##phase, 1, static_cast<void *>(const_cast<char *>(#phase))); \
 XPLMRegisterDrawCallback(DebugRenderPhase, xplm_Phase_##phase, 0, static_cast<void *>(const_cast<char *>(#phase)));
 
-/**
 static void init_debugRenderPhases()
 {
 	REGISTER_PHASE_DEBUG(FirstScene)
@@ -125,7 +124,6 @@ static void init_debugRenderPhases()
 	REGISTER_PHASE_DEBUG(LocalMap2D)
 	REGISTER_PHASE_DEBUG(LocalMapProfile)
 }
-**/
 
 static bool gDrawLabels = true;
 
@@ -310,7 +308,10 @@ void			XPMPInitDefaultPlaneRenderer(void)
 							 &gACFPlanes, NULL);
 #endif
 
-	// init_debugRenderPhases(); // log all render phases if needed
+	if (gIntPrefsFunc("debug", "render_phases", 0))
+	{
+		init_debugRenderPhases(); // log all render phases if needed
+	}
 
 	// We don't know how many multiplayer planes there are - fetch as many as we can.
 
