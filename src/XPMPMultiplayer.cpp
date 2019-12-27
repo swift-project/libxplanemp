@@ -374,6 +374,8 @@ void XPMPMultiplayerDisable(void)
 
 		XPLMUnregisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Gauges, 0, nullptr);
 		XPLMUnregisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_Gauges, 1, nullptr);
+		XPLMUnregisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Window, 0, nullptr);
+		XPLMUnregisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_LastCockpit, 1, nullptr);
 	}
 
 	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, 0);
