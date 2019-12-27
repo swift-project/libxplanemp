@@ -339,13 +339,16 @@ const  char * XPMPMultiplayerEnable(void)
 
 		XPLMCountAircraft(&total, &active, &who);
 
-		// Register the plane control calls.
-		XPLMRegisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Airplanes, 1 /* before */, nullptr);
-		XPLMRegisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_Airplanes, 0 /* after */, nullptr);
+		if (gIntPrefsFunc("debug", "tcas_traffic", 1))
+		{
+			// Register the plane control calls.
+			XPLMRegisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Airplanes, 1 /* before */, nullptr);
+			XPLMRegisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_Airplanes, 0 /* after */, nullptr);
 
-		// Avoid a crash in swift.
-		XPLMRegisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Window, 0 /* after */, nullptr);
-		XPLMRegisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_LastCockpit, 1 /* before */, nullptr);
+			// Avoid a crash in swift.
+			XPLMRegisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Window, 0 /* after */, nullptr);
+			XPLMRegisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_LastCockpit, 1 /* before */, nullptr);
+		}
 	} else {
 		gHasControlOfAIAircraft = false;
 		XPLMDebugString("WARNING: " XPMP_CLIENT_LONGNAME " did not acquire multiplayer planes!!\n");
@@ -372,10 +375,13 @@ void XPMPMultiplayerDisable(void)
 		XPLMReleasePlanes();
 		gHasControlOfAIAircraft = false;
 
-		XPLMUnregisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Gauges, 0, nullptr);
-		XPLMUnregisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_Gauges, 1, nullptr);
-		XPLMUnregisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Window, 0, nullptr);
-		XPLMUnregisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_LastCockpit, 1, nullptr);
+		if (gIntPrefsFunc("debug", "tcas_traffic", 1))
+		{
+			XPLMUnregisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Gauges, 0, nullptr);
+			XPLMUnregisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_Gauges, 1, nullptr);
+			XPLMUnregisterDrawCallback(XPMPDisablePlaneCount, xplm_Phase_Window, 0, nullptr);
+			XPLMUnregisterDrawCallback(XPMPEnablePlaneCount, xplm_Phase_LastCockpit, 1, nullptr);
+		}
 	}
 
 	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, 0);
