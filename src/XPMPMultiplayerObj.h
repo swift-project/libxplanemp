@@ -57,7 +57,7 @@ public:
 	void Purge() { mPointPool.clear(); }
 	int Size() { return static_cast<int>(mPointPool.size()); }
 private:
-	vector<float>	mPointPool;
+	std::vector<float>	mPointPool;
 };
 
 /*****************************************************
@@ -76,8 +76,8 @@ struct	LODObjInfo_t {
 
 	float					nearDist;	// The visible range
 	float					farDist;	// of this LOD
-	vector<int>				triangleList;
-	vector<LightInfo_t>		lights;
+	std::vector<int>		triangleList;
+	std::vector<LightInfo_t>	lights;
 	OBJ_PointPool			pointPool;
 	GLuint					dl;
 };
@@ -85,13 +85,13 @@ struct	LODObjInfo_t {
 // One of these structs per OBJ file
 struct	ObjInfo_t {
 
-	string					path;
-	string                  defaultTexture;
-	string					defaultLitTexture;
+	std::string				path;
+	std::string             defaultTexture;
+	std::string				defaultLitTexture;
 	int						texnum;
 	int						texnum_lit;
 	XObj					obj;
-	vector<LODObjInfo_t>	lods;
+	std::vector<LODObjInfo_t>	lods;
 	LoadStatus loadStatus;
 	double calcVertOffset = 0.0; // meters
 };

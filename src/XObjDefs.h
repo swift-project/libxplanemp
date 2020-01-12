@@ -25,7 +25,6 @@
 
 #include <string>
 #include <vector>
-using namespace std;
 
 enum {
 
@@ -92,16 +91,16 @@ struct XObjCmd {
 	int				cmdType;	// Are we a line, poly or attribute?
 	int				cmdID;		// What command are we?
 	
-	vector<float>	attributes;
-	vector<vec_tex>	st;
-	vector<vec_rgb>	rgb;
+	std::vector<float>	attributes;
+	std::vector<vec_tex>	st;
+	std::vector<vec_rgb>	rgb;
 
 };
 
 struct	XObj {
 
-	string			texture;
-	vector<XObjCmd>	cmds;
+	std::string			texture;
+	std::vector<XObjCmd>	cmds;
 
 };
 

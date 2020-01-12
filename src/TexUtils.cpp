@@ -231,19 +231,19 @@ find_first_bit_set(unsigned int x)
   take place asynchronously.
 */
 bool
-VerifyTextureImage(const string &filename, const ImageInfo &im)
+VerifyTextureImage(const std::string &filename, const ImageInfo &im)
 {
-	stringstream errout;
+	std::stringstream errout;
 	if (im.width <= 0 || im.height <= 0) {
 		errout << XPMP_CLIENT_NAME": Texture " << filename << " failed vailidation - dimensions ("
-			<< im.width << " x " << im.height << ") <= 0" << endl;
+			<< im.width << " x " << im.height << ") <= 0" << std::endl;
 		XPLMDebugString(errout.str().c_str());
 		return false;
 	}
 	if (im.width > xpmp_tex_maxSize || im.height > xpmp_tex_maxSize) {
 		errout << XPMP_CLIENT_NAME": Texture " << filename << " failed validation - dimensions ("
 			<< im.width << " x " << im.height << ") exceeds GL maximum ("
-			<< xpmp_tex_maxSize << ")" << endl;
+			<< xpmp_tex_maxSize << ")" << std::endl;
 		XPLMDebugString(errout.str().c_str());
 		return false;
 	}
@@ -252,7 +252,7 @@ VerifyTextureImage(const string &filename, const ImageInfo &im)
 	// wpow can't be -1 becasue we checked for <=0 already.
 	if (im.width != (1<<(wpow)))  {
 		errout << XPMP_CLIENT_NAME": Texture " << filename << "failed validation - width ("
-			<< im.width << ") is not a power of two" << endl;			
+			<< im.width << ") is not a power of two" << std::endl;
 		XPLMDebugString(errout.str().c_str());
 		return false;
 	}
@@ -260,7 +260,7 @@ VerifyTextureImage(const string &filename, const ImageInfo &im)
 	// hpow can't be -1 becasue we checked for <=0 already.
 	if (im.height != (1<<(hpow)))  {
 		errout << XPMP_CLIENT_NAME": Texture " << filename << "failed validation - height ("
-			<< im.height << ") is not a power of two" << endl;			
+			<< im.height << ") is not a power of two" << std::endl;
 		XPLMDebugString(errout.str().c_str());
 		return false;
 	}

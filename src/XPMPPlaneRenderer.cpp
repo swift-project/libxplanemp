@@ -21,6 +21,8 @@
  *
  */
 
+#define NOMINMAX
+
 #include "XPMPPlaneRenderer.h"
 #include "XPMPMultiplayer.h"
 #include "XPMPMultiplayerCSL.h"
@@ -428,7 +430,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	// Culling - read the camera pos«and figure out what's visible.
 
 	const double	maxDist = XPLMGetDataf(gVisDataRef);
-	const double	labelDist = min(maxDist, MAX_LABEL_DIST) * x_camera.zoom;		// Labels get easier to see when users zooms.
+	const double	labelDist = std::min(maxDist, MAX_LABEL_DIST) * x_camera.zoom;		// Labels get easier to see when users zooms.
 	const double	fullPlaneDist = x_camera.zoom * (5280.0 / 3.2) * (gFloatPrefsFunc ? gFloatPrefsFunc("planes","full_distance", 3.0) : 3.0);	// Only draw planes fully within 3 miles.
 	const int		maxFullPlanes = gIntPrefsFunc ? gIntPrefsFunc("planes","max_full_count", 100) : 100;						// Draw no more than 100 full planes!
 
@@ -709,13 +711,13 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 	size_t	renderedCounter = 0;
 	int		lastMultiRefUsed = -1;
 
-	vector<PlaneToRender_t *>			planes_obj_lites;
-	multimap<int, PlaneToRender_t *>	planes_austin;
-	vector<PlaneToRender_t *>			planes_obj;
-	vector<PlaneToRender_t *>			planes_obj8;
+	std::vector<PlaneToRender_t *>			planes_obj_lites;
+	std::multimap<int, PlaneToRender_t *>	planes_austin;
+	std::vector<PlaneToRender_t *>			planes_obj;
+	std::vector<PlaneToRender_t *>			planes_obj8;
 
-	vector<PlaneToRender_t *>::iterator			planeIter;
-	multimap<int, PlaneToRender_t *>::iterator	planeMapIter;
+	std::vector<PlaneToRender_t *>::iterator		planeIter;
+	std::multimap<int, PlaneToRender_t *>::iterator	planeMapIter;
 
 	// In our first iteration pass we'll go through all planes and handle TCAS, draw planes that have no
 	// CSL model, and put CSL planes in the right 'bucket'.
@@ -748,7 +750,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				// iter->second.y = static_cast<float>(getCorrectYValue(iter->second.x, iter->second.y, iter->second.z, iter->second.plane->model->actualVertOffset, isClampingOn));
 				if (iter->second.plane->model->plane_type == plane_Austin)
 				{
-					planes_austin.insert(multimap<int, PlaneToRender_t *>::value_type(CSL_GetOGLIndex(iter->second.plane->model), &iter->second));
+					planes_austin.insert(std::multimap<int, PlaneToRender_t *>::value_type(CSL_GetOGLIndex(iter->second.plane->model), &iter->second));
 				}
 				else if (iter->second.plane->model->plane_type == plane_Obj)
 				{

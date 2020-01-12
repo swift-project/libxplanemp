@@ -285,7 +285,7 @@ void XPMPMultiplayerCleanup(void)
 
 
 // We use this array to track Austin's planes, since we have to mess with them.
-static	vector<string>	gPlanePaths;
+static	std::vector<std::string>	gPlanePaths;
 
 const  char * XPMPMultiplayerEnable(void)
 {
@@ -514,7 +514,7 @@ XPMPPlaneID		XPMPCreatePlane(
 	return planePtr;
 }
 
-bool CompareCaseInsensitive(const string &a, const string &b)
+bool CompareCaseInsensitive(const std::string &a, const std::string &b)
 {
 	return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](char aa, char bb) { return toupper(aa) == toupper(bb); });
 }

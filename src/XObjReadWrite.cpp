@@ -51,8 +51,8 @@ bool XObjReadWrite::readHeader(StTextFileScanner &f, int &version, XObj& outObj)
 
 	// First we should have some kind of token telling us whether we're Mac or PC
 	// line endings.  But we don't care that much.
-	string line = f.get();
-	vector<string> tokens;
+	std::string line = f.get();
+	std::vector<std::string> tokens;
 	BreakString(line, tokens);
 	if (tokens.empty()) return false;
 	//ascii = tokens[0];
@@ -64,7 +64,7 @@ bool XObjReadWrite::readHeader(StTextFileScanner &f, int &version, XObj& outObj)
 
 	BreakString(line, tokens);
 	if (tokens.empty()) return false;
-	string vers = tokens[0];
+	std::string vers = tokens[0];
 	f.next();
 	if (f.done()) return false;
 
@@ -99,8 +99,8 @@ bool XObjReadWrite::readHeader(StTextFileScanner &f, int &version, XObj& outObj)
 
 bool XObjReadWrite::read(const std::string &inFile, XObj& outObj)
 {
-	vector<string>	tokens;
-	string			line;
+	std::vector<std::string>	tokens;
+	std::string		line;
 	int				cmd_id, count, obj2_op;
 	int				version = 1;
 	vec_tex			vst;
@@ -366,7 +366,7 @@ bool XObjReadWrite::write(const std::string &inFile, const XObj& inObj)
 	fprintf(fi,"OBJ" CRLF CRLF);
 	fprintf(fi,"%s\t\t//" CRLF CRLF, inObj.texture.c_str());
 	
-	for (vector<XObjCmd>::const_iterator iter = inObj.cmds.begin(); iter != inObj.cmds.end(); ++iter)
+	for (std::vector<XObjCmd>::const_iterator iter = inObj.cmds.begin(); iter != inObj.cmds.end(); ++iter)
 	{
 		int 	index	= FindIndexForCmd(iter->cmdID);
 		switch(iter->cmdType) {
@@ -377,7 +377,7 @@ bool XObjReadWrite::write(const std::string &inFile, const XObj& inObj)
 			else
 				fprintf(fi,"%s\t\t//" CRLF, gCmds[index].name);
 			
-			for (vector<vec_rgb>::const_iterator riter = iter->rgb.begin();
+			for (std::vector<vec_rgb>::const_iterator riter = iter->rgb.begin();
 				 riter != iter->rgb.end(); ++riter)
 			{
 				fprintf(fi,"%f %f %f    %f %f %f" CRLF,
@@ -395,7 +395,7 @@ bool XObjReadWrite::write(const std::string &inFile, const XObj& inObj)
 			else
 				fprintf(fi,"%s\t\t//" CRLF, gCmds[index].name);
 			
-			for (vector<vec_tex>::const_iterator siter = iter->st.begin();
+			for (std::vector<vec_tex>::const_iterator siter = iter->st.begin();
 				 siter != iter->st.end(); ++siter)
 			{
 				fprintf(fi,"%f %f %f    %f %f" CRLF,
@@ -408,7 +408,7 @@ bool XObjReadWrite::write(const std::string &inFile, const XObj& inObj)
 
 		case type_Attr:
 			fprintf(fi,"%s",gCmds[index].name);
-			for (vector<float>::const_iterator aiter = iter->attributes.begin();
+			for (std::vector<float>::const_iterator aiter = iter->attributes.begin();
 				 aiter != iter->attributes.end(); ++aiter)
 			{
 				fprintf(fi," %f", *aiter);

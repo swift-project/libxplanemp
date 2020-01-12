@@ -30,8 +30,6 @@ struct	XObj;
 #include <vector>
 #include <memory>
 
-using namespace std;
-
 class	StTextFileScanner {
 public:
 
@@ -44,27 +42,27 @@ public:
 	void	skip_blanks(bool skip_blanks);
 	bool	done();
 	void	next();
-	string	get();
+	std::string	get();
 
 private:
 
 	void	read_next(void);
 
 	FILE *	mFile;
-	string	mBuf;
+	std::string	mBuf;
 	bool	mDone;
 	bool	mSkipBlanks;
 };	
 
-void	BreakString(const string& line, vector<string>& words);
+void	BreakString(const std::string& line, std::vector<std::string>& words);
 
-void	StringToUpper(string&);
+void	StringToUpper(std::string&);
 
-bool	HasExtNoCase(const string& inStr, const char * inExt);
+bool	HasExtNoCase(const std::string& inStr, const char * inExt);
 
 void	ChangePolyCmdCW(XObjCmd& ioCmd);
 
-bool	GetNextNoComments(StTextFileScanner& f, string& s);
+bool	GetNextNoComments(StTextFileScanner& f, std::string& s);
 
 // WARNING: this is a dumb radius, a radius from 0,0,0.  It is not
 // the radius of a bounding sphere!  Why it is in this translation
@@ -75,7 +73,7 @@ double	GetObjRadius(const XObj& inObj);
 //void	StripPathCP(string& ioPath);
 //void	ExtractPath(string& ioPath);
 
-int		PickRandom(vector<double>& chances);
+int		PickRandom(std::vector<double>& chances);
 bool	RollDice(double inProb);
 double	RandRange(double mmin, double mmax);
 double	RandRangeBias(double mmin, double mmax, double biasRatio, double randomAmount);
@@ -91,19 +89,19 @@ void	FSSpec_2_String(const FSSpec& inSpec, string& outString);
 #endif
 
 void	ExtractFixedRecordString(	
-		const string&		inLine,
+		const std::string&	inLine,
 		int					inBegin,
 		int					inEnd,
-		string&				outString);
+		std::string&		outString);
 
 bool	ExtractFixedRecordLong(
-		const string&		inLine,
+		const std::string&	inLine,
 		int					inBegin,
 		int					inEnd,
 		long&				outLong);
 
 bool	ExtractFixedRecordUnsignedLong(
-		const string&		inLine,
+		const std::string&	inLine,
 		int					inBegin,
 		int					inEnd,
 		unsigned long&		outUnsignedLong);
@@ -129,7 +127,7 @@ private:
 
 };
 
-void	DecomposeObjCmd(const XObjCmd& inCmd, vector<XObjCmd>& outCmd, int maxValence);
+void	DecomposeObjCmd(const XObjCmd& inCmd, std::vector<XObjCmd>& outCmd, int maxValence);
 void	DecomposeObj(const XObj& inObj, XObj& outObj, int maxValence);
 
 bool DoesFileExist(const std::string &filePath);

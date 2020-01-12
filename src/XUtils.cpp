@@ -100,7 +100,7 @@ void	StTextFileScanner::next()
 	read_next();
 }
 
-string	StTextFileScanner::get()
+std::string	StTextFileScanner::get()
 {
 	return mBuf;
 }
@@ -134,37 +134,37 @@ void	StTextFileScanner::read_next(void)
 	}
 }
 
-void	BreakString(const string& line, vector<string>& words)
+void	BreakString(const std::string& line, std::vector<std::string>& words)
 {
 	words.clear();
-	string::const_iterator i = line.begin();
+	std::string::const_iterator i = line.begin();
 	while (i < line.end())
 	{
-		string::const_iterator s = i;
+		std::string::const_iterator s = i;
 		while (s < line.end() && isspace(*s))
 			++s;
 		
-		string::const_iterator e = s;
+		std::string::const_iterator e = s;
 		while (e < line.end() && !isspace(*e))
 			++e;
 
 		if (s < e)
-			words.push_back(string(s,e));
+			words.push_back(std::string(s,e));
 		
 		i = e;
 	}
 }
 
-void	StringToUpper(string& s)
+void	StringToUpper(std::string& s)
 {	
-	for (string::iterator i = s.begin(); i != s.end(); ++i)
+	for (std::string::iterator i = s.begin(); i != s.end(); ++i)
 		*i = toupper(*i);
 }
 
-bool	HasExtNoCase(const string& inStr, const char * inExt)
+bool	HasExtNoCase(const std::string& inStr, const char * inExt)
 {
-	string s(inStr);
-	string e(inExt);
+	std::string s(inStr);
+	std::string e(inExt);
 	StringToUpper(s);
 	StringToUpper(e);
 	
@@ -176,8 +176,8 @@ bool	HasExtNoCase(const string& inStr, const char * inExt)
 
 void	ChangePolyCmdCW(XObjCmd& ioCmd)
 {
-	vector<vec_tex>	v;
-	for (vector<vec_tex>::reverse_iterator riter = ioCmd.st.rbegin();
+	std::vector<vec_tex>	v;
+	for (std::vector<vec_tex>::reverse_iterator riter = ioCmd.st.rbegin();
 		 riter != ioCmd.st.rend(); ++riter)
 	{
 		v.push_back(*riter);
@@ -185,7 +185,7 @@ void	ChangePolyCmdCW(XObjCmd& ioCmd)
 	ioCmd.st = v;
 }
 
-bool	GetNextNoComments(StTextFileScanner& f, string& s)
+bool	GetNextNoComments(StTextFileScanner& f, std::string& s)
 {
 	while(!f.done())
 	{
@@ -200,10 +200,10 @@ bool	GetNextNoComments(StTextFileScanner& f, string& s)
 double	GetObjRadius(const XObj& inObj)
 {
 	double	dist = 0, d;
-	for (vector<XObjCmd>::const_iterator c = inObj.cmds.begin();
+	for (std::vector<XObjCmd>::const_iterator c = inObj.cmds.begin();
 		 c != inObj.cmds.end(); ++c)
 	{
-		for (vector<vec_tex>::const_iterator v = c->st.begin();
+		for (std::vector<vec_tex>::const_iterator v = c->st.begin();
 			 v != c->st.end(); ++v)
 		{
 			d = sqrt(v->v[0] * v->v[0] +
@@ -212,7 +212,7 @@ double	GetObjRadius(const XObj& inObj)
 			if (d > dist) dist = d;
 		}
 		
-		for (vector<vec_rgb>::const_iterator p = c->rgb.begin();
+		for (std::vector<vec_rgb>::const_iterator p = c->rgb.begin();
 			 p != c->rgb.end(); ++p)
 		{
 			d = sqrt(p->v[0] * p->v[0] +
@@ -224,7 +224,7 @@ double	GetObjRadius(const XObj& inObj)
 	return dist;
 }
 
-int		PickRandom(vector<double>& chances)
+int		PickRandom(std::vector<double>& chances)
 {
 	double	v = (double) (rand() % RAND_MAX) / (double) RAND_MAX;
 	
@@ -349,10 +349,10 @@ void	FSSpec_2_String(const FSSpec& inSpec, string& outString)
 #endif
 
 void	ExtractFixedRecordString(	
-		const string&		inLine,
+		const std::string&	inLine,
 		int					inBegin,
 		int					inEnd,
-		string&				outString)
+		std::string&		outString)
 {
 	int	sp = inBegin-1;
 	int ep = inEnd;
@@ -369,12 +369,12 @@ void	ExtractFixedRecordString(
 }				
 
 bool	ExtractFixedRecordLong(
-		const string&		inLine,
+		const std::string&	inLine,
 		int					inBegin,
 		int					inEnd,
 		long&				outLong)
 {
-	string	foo;
+	std::string	foo;
 	ExtractFixedRecordString(inLine, inBegin, inEnd, foo);
 	if (foo.empty())	return false;
 	outLong = strtol(foo.c_str(), NULL, 10);
@@ -382,12 +382,12 @@ bool	ExtractFixedRecordLong(
 }				
 
 bool	ExtractFixedRecordUnsignedLong(
-		const string&		inLine,
+		const std::string&	inLine,
 		int					inBegin,
 		int					inEnd,
 		unsigned long&		outUnsignedLong)
 {
-	string	foo;
+	std::string	foo;
 	ExtractFixedRecordString(inLine, inBegin, inEnd, foo);
 	if (foo.empty())	return false;
 	outUnsignedLong = strtoul(foo.c_str(), NULL, 10);
@@ -402,8 +402,8 @@ struct	XPointPool::XPointPoolImp {
 		float xyz[3];
 		float st[2];
 	};
-	vector<p_info>			pts;
-	map<string, int>		index;
+	std::vector<p_info>			pts;
+	std::map<std::string, int>	index;
 
 	void	clear()
 	{
@@ -478,7 +478,7 @@ int		XPointPool::count(void)
 	return mImp->count();
 }
 
-void	DecomposeObjCmd(const XObjCmd& inCmd, vector<XObjCmd>& outCmds, int maxValence)
+void	DecomposeObjCmd(const XObjCmd& inCmd, std::vector<XObjCmd>& outCmds, int maxValence)
 {
 	XObjCmd	c;
 	c.cmdType = type_Poly;
@@ -604,10 +604,10 @@ void	DecomposeObj(const XObj& inObj, XObj& outObj, int maxValence)
 {
 	outObj.cmds.clear();
 	outObj.texture = inObj.texture;
-	for (vector<XObjCmd>::const_iterator cmd = inObj.cmds.begin();
+	for (std::vector<XObjCmd>::const_iterator cmd = inObj.cmds.begin();
 		 cmd != inObj.cmds.end(); ++cmd)
 	{
-		vector<XObjCmd>		newCmds;
+		std::vector<XObjCmd>		newCmds;
 		DecomposeObjCmd(*cmd, newCmds, maxValence);
 		outObj.cmds.insert(outObj.cmds.end(), newCmds.begin(), newCmds.end());
 	}

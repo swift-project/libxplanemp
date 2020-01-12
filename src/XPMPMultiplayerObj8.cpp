@@ -34,8 +34,6 @@
 #include <memory>
 #include <thread>
 
-using namespace std;
-
 bool cloneObj8WithDifferentTexture(const std::string &sourceFileName, const std::string &targetFileName, const std::string &textureFile, const std::string &litTextureFile);
 
 static Obj8Manager gObj8Manager;
@@ -147,9 +145,9 @@ void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, bool
 		{
 			// generate the name for new object
 			std::string destObjFile = objForAcf.sourceFile;
-			string::size_type pos = destObjFile.find_last_of(".");
+			std::string::size_type pos = destObjFile.find_last_of(".");
 			std::string suffix = "_" + mtl;
-			if (pos != string::npos)
+			if (pos != std::string::npos)
 			{
 				destObjFile.insert(pos, suffix);
 			}

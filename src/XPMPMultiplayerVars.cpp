@@ -34,11 +34,11 @@ void *							gRendererRef;
 int								gDumpOneRenderCycle = 0;
 int 							gEnableCount = 1;
 
-vector<CSLPackage_t>			gPackages;
-map<string, string>				gGroupings;
+std::vector<CSLPackage_t>		gPackages;
+std::map<std::string, std::string>	gGroupings;
 
-string							gDefaultPlane;
-map<string, CSLAircraftCode_t>	gAircraftCodes;
+std::string						gDefaultPlane;
+std::map<std::string, CSLAircraftCode_t>	gAircraftCodes;
 ThreadSynchronizer				gThreadSynchronizer;
 
 void ThreadSynchronizer::queueCall(std::function<void()> func)

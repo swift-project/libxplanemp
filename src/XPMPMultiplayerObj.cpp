@@ -57,8 +57,6 @@
 
 int xpmp_spare_texhandle_decay_frames = -1;
 
-using namespace std;
-
 const	double	kMetersToNM = 0.000539956803;
 // Some color constants
 //const	float	kNavLightRed[] = {1.0, 0.0, 0.2, 0.6};
@@ -73,7 +71,7 @@ const	float	kTaxiLight[] = {1.0f, 1.0f, 0.7f, 0.6f};
 
 static	int sLightTexture = -1;
 
-static void MakePartialPathNativeObj(string& io_str)
+static void MakePartialPathNativeObj(std::string& io_str)
 {
 	//	char sep = *XPLMGetDirectorySeparator();
 	for(size_t i = 0; i < io_str.size(); ++i)
@@ -241,8 +239,8 @@ void OBJ_PointPool::DebugDrawNormals()
 	glEnd();
 }
 
-static	map<string, int>	sTexes;
-static vector<ObjInfo_t>	sObjects;
+static	std::map<std::string, int>	sTexes;
+static std::vector<ObjInfo_t>	sObjects;
 
 static ObjManager gObjManager(OBJ_LoadModel);
 static TextureManager gTextureManager(OBJ_LoadTexture);
@@ -253,9 +251,9 @@ static std::queue<GLuint> sFreedTextures;
 		Utility functions to handle OBJ stuff
 ******************************************************/
 
-int OBJ_LoadLightTexture(const string &inFilePath, bool inForceMaxTex)
+int OBJ_LoadLightTexture(const std::string &inFilePath, bool inForceMaxTex)
 {
-	string	path(inFilePath);
+	std::string	path(inFilePath);
 	if (sTexes.count(path) > 0)
 		return sTexes[path];
 
@@ -292,7 +290,7 @@ void DeleteTexture(CSLTexture_t* texture)
 	delete texture;
 }
 
-TextureManager::ResourceHandle OBJ_LoadTexture(const string &path)
+TextureManager::ResourceHandle OBJ_LoadTexture(const std::string &path)
 {
 #if DEBUG_RESOURCE_CACHE
 		XPLMDebugString(XPMP_CLIENT_NAME ": Loading texture ");
@@ -351,7 +349,7 @@ void DeleteObjInfo(ObjInfo_t* objInfo)
 }
 
 // Load one model - returns nullptr handle if it can't be loaded.
-ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
+ObjManager::ResourceHandle OBJ_LoadModel(const std::string &inFilePath)
 {
 #if DEBUG_RESOURCE_CACHE
 		XPLMDebugString(XPMP_CLIENT_NAME ": Loading OBJ ");
@@ -361,7 +359,7 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 #endif
 
 	ObjInfo_t objInfo;
-	string path(inFilePath);
+	std::string path(inFilePath);
 
 	bool ok = XObjReadWrite::read(path, objInfo.obj);
 	if (!ok)
@@ -376,8 +374,8 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 
 	MakePartialPathNativeObj(objInfo.obj.texture);
 	objInfo.path = path;
-	string tex_path(path);
-	string::size_type p = tex_path.find_last_of("\\:/");//XPLMGetDirectorySeparator());
+	std::string tex_path(path);
+	std::string::size_type p = tex_path.find_last_of("\\:/");//XPLMGetDirectorySeparator());
 	tex_path.erase(p+1);
 	tex_path += objInfo.obj.texture;
 	tex_path += ".png";
@@ -442,7 +440,7 @@ ObjManager::ResourceHandle OBJ_LoadModel(const string &inFilePath)
 			break;
 		case type_Poly:
 		{
-			vector<int> indexes;
+			std::vector<int> indexes;
 			// First get our point pool setup with all verticies
 			for(size_t n = 0; n < cmd.st.size(); n++)
 			{
@@ -545,13 +543,13 @@ void OBJ_LoadModelAsync(const std::shared_ptr<XPMPPlane_t> &plane)
 			return;
 		}
 
-		string texturePath = plane->model->texturePath;
+		std::string texturePath = plane->model->texturePath;
 		if (texturePath.empty()) { texturePath = std::atomic_load(&plane->objHandle)->defaultTexture; }
 
 		gTextureManager.loadAsync(texturePath, [plane](const TextureManager::ResourceHandle &textureHandle)
 		{
 			std::atomic_store(&plane->texHandle, textureHandle);
-			string textureLitPath = plane->model->textureLitPath;
+			std::string textureLitPath = plane->model->textureLitPath;
 			if (textureLitPath.empty()) { textureLitPath = std::atomic_load(&plane->objHandle)->defaultLitTexture; }
 
 			gTextureManager.loadAsync(textureLitPath, [plane](const TextureManager::ResourceHandle &textureLitHandle)
@@ -567,7 +565,7 @@ void OBJ_LoadModelAsync(const std::shared_ptr<XPMPPlane_t> &plane)
 	});
 }
 
-std::string OBJ_DefaultModel(const string &path)
+std::string OBJ_DefaultModel(const std::string &path)
 {
 	XObj xobj;
 	int version;
@@ -1038,20 +1036,20 @@ int		OBJ_GetModelTexID(int model)
 	else { return sObjects[model].texnum; }
 }
 
-string OBJ_GetLitTextureByTexture(const std::string &texturePath)
+std::string OBJ_GetLitTextureByTexture(const std::string &texturePath)
 {
-	static const vector<string> extensions =
+	static const std::vector<std::string> extensions =
 	{
 		"LIT"
 	};
-	static const string defaultExtension("_LIT");
+	static const std::string defaultExtension("_LIT");
 
 	auto position = texturePath.find_last_of('.');
 	if(position == std::string::npos) { return {}; }
 
 	for (const auto &extension : extensions)
 	{
-		string textureLitPath = texturePath;
+		std::string textureLitPath = texturePath;
 		textureLitPath.insert(position, extension);
 
 		// Does the file exist?
@@ -1060,7 +1058,7 @@ string OBJ_GetLitTextureByTexture(const std::string &texturePath)
 
 	// If none of them exist, we return the default "_LIT" without testing.
 	// If loading fails later, the user will be properly informed.
-	string textureLitPath = texturePath;
+	std::string textureLitPath = texturePath;
 	textureLitPath.insert(position, defaultExtension);
 	return textureLitPath;
 }

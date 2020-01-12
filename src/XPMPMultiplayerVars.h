@@ -41,8 +41,6 @@
 
 #include "XObjDefs.h"
 
-using namespace std;
-
 #include "XPMPMultiplayer.h"
 #include "XPMPMultiplayerObj.h"
 #include "XPMPMultiplayerObj8.h"	// for obj8 attachment info
@@ -92,9 +90,9 @@ enum class eVertOffsetType {
 // and then implementation-specifc stuff.
 struct	CSLPlane_t {
 
-	string getModelName() const
+	std::string getModelName() const
 	{
-		string modelName = "";
+		std::string modelName = "";
 		for (const auto &dir : dirNames)
 		{
 			modelName += dir;
@@ -109,9 +107,9 @@ struct	CSLPlane_t {
 		return modelName;
 	}
 	
-	string getMtlCode() const
+	std::string getMtlCode() const
 	{
-		string mtlCode = "";
+		std::string mtlCode = "";
 		if (!icao.empty())
 		{
 			mtlCode += icao;
@@ -127,17 +125,17 @@ struct	CSLPlane_t {
 		return mtlCode;
 	}
 
-	vector<string>              dirNames;       // Relative directories from xsb_aircrafts.txt down to object file
-	string                      objectName;     // Basename of the object file
-	string                      textureName;    // Basename of the texture file
-	string                      icao;           // Icao type of this model
-	string                      airline;        // Airline identifier. Can be empty.
-	string                      livery;         // Livery identifier. Can be empty.
+	std::vector<std::string>    dirNames;       // Relative directories from xsb_aircrafts.txt down to object file
+	std::string                 objectName;     // Basename of the object file
+	std::string                 textureName;    // Basename of the texture file
+	std::string                 icao;           // Icao type of this model
+	std::string                 airline;        // Airline identifier. Can be empty.
+	std::string                 livery;         // Livery identifier. Can be empty.
 
 	int							plane_type;		// What kind are we?
-	string						file_path;		// Where do we load from (oz and obj, debug-use-only for OBJ8)
-	string						texturePath;	// Full path to the planes texture
-	string						textureLitPath; // Full path to the planes lit texture
+	std::string					file_path;		// Where do we load from (oz and obj, debug-use-only for OBJ8)
+	std::string					texturePath;	// Full path to the planes texture
+	std::string					textureLitPath; // Full path to the planes lit texture
 	bool						moving_gear;	// Does gear retract?
 
 	// plane_Austin
@@ -149,7 +147,7 @@ struct	CSLPlane_t {
 	int							texLitID;		// can be 0 for no customization
 
 	// plane_Obj8
-	vector<obj_for_acf>			attachments;
+	std::vector<obj_for_acf>	attachments;
 
 	bool isXsbVertOffsetAvail = false;
 	double xsbVertOffset = 0.0;
@@ -180,27 +178,27 @@ struct	CSLPackage_t {
 		return !name.empty() && !path.empty();
 	}
 
-	string						name;
-	string                      path;
-	vector<CSLPlane_t>			planes;
-	map<string, int>			matches[match_count];
+	std::string						name;
+	std::string                     path;
+	std::vector<CSLPlane_t>			planes;
+	std::map<std::string, int>		matches[match_count];
 
 };
 
-extern vector<CSLPackage_t>		gPackages;
+extern std::vector<CSLPackage_t>		gPackages;
 
-extern map<string, string>		gGroupings;
+extern std::map<std::string, std::string>		gGroupings;
 
 /**************** Model matching using ICAO doc 8643
 		(http://www.icao.int/anb/ais/TxtFiles/Doc8643.txt) ***********/
 
 struct CSLAircraftCode_t {
-	string				icao;		// aircraft ICAO code
-	string				equip;		// equipment code (L1T, L2J etc)
+	std::string			icao;		// aircraft ICAO code
+	std::string			equip;		// equipment code (L1T, L2J etc)
 	char				category;	// L, M, H, V (vertical = helo)
 };
 
-extern map<string, CSLAircraftCode_t>	gAircraftCodes;
+extern std::map<std::string, CSLAircraftCode_t>	gAircraftCodes;
 
 /**************** PLANE OBJECTS ********************/
 
@@ -220,9 +218,9 @@ struct Obj8Info_t
 struct	XPMPPlane_t {
 
 	// Modeling properties
-	string					icao;
-	string					airline;
-	string					livery;
+	std::string				icao;
+	std::string				airline;
+	std::string				livery;
 	CSLPlane_t *			model = nullptr; // May be null if no good match
 	int 					match_quality;
 	
@@ -253,14 +251,14 @@ struct	XPMPPlane_t {
 	std::atomic_bool					allObj8Loaded = { false };
 };
 
-typedef	XPMPPlane_t *								XPMPPlanePtr;
-typedef	vector<std::shared_ptr<XPMPPlane_t>>		XPMPPlaneVector;
+typedef	XPMPPlane_t *									XPMPPlanePtr;
+typedef	std::vector<std::shared_ptr<XPMPPlane_t>>		XPMPPlaneVector;
 
 // Notifiers - clients can install callbacks and be told when a plane's
 // data changes.
-typedef	pair<XPMPPlaneNotifier_f, void *>			XPMPPlaneNotifierPair;
-typedef	pair<XPMPPlaneNotifierPair, XPLMPluginID>	XPMPPlaneNotifierTripple;
-typedef	vector<XPMPPlaneNotifierTripple>			XPMPPlaneNotifierVector;
+typedef	std::pair<XPMPPlaneNotifier_f, void *>			XPMPPlaneNotifierPair;
+typedef	std::pair<XPMPPlaneNotifierPair, XPLMPluginID>	XPMPPlaneNotifierTripple;
+typedef	std::vector<XPMPPlaneNotifierTripple>			XPMPPlaneNotifierVector;
 
 class ThreadSynchronizer
 {
@@ -288,7 +286,7 @@ extern void *							gRendererRef;			// The actual rendering func
 extern int								gDumpOneRenderCycle;	// Debug
 extern int 								gEnableCount;			// Hack - see TCAS support
 
-extern string							gDefaultPlane;			// ICAO of default plane
+extern std::string						gDefaultPlane;			// ICAO of default plane
 extern ThreadSynchronizer				gThreadSynchronizer;
 
 // Helper funcs
