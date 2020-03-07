@@ -26,6 +26,10 @@
 
 #include "XPLMDefs.h"
 
+#ifdef __cplusplus
+#include <string>
+#endif
+
 #ifndef XPMP_CLIENT_NAME
 #define XPMP_CLIENT_NAME "A_PLUGIN"
 #endif
@@ -35,6 +39,8 @@
 #endif
 
 #ifdef __cplusplus
+std::string XPMPTimestamp();
+
 extern "C" {
 #endif
 

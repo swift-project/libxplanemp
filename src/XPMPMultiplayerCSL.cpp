@@ -129,9 +129,12 @@ static void MakePartialPathNativeObj(std::string& io_str)
 }
 
 struct XPLMDump { 
-	XPLMDump() { }
-	
+	XPLMDump() {
+		XPLMDebugString(XPMPTimestamp().c_str());
+	}
+
 	XPLMDump(const std::string& inFileName, int lineNum, const char * line) {
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME " WARNING: Parse Error in file ");
 		XPLMDebugString(inFileName.c_str());
 		XPLMDebugString(" line ");
@@ -144,6 +147,7 @@ struct XPLMDump {
 	}
 
 	XPLMDump(const std::string& inFileName, int lineNum, const std::string& line) {
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME " WARNING: Parse Error in file ");
 		XPLMDebugString(inFileName.c_str());
 		XPLMDebugString(" line ");
@@ -154,7 +158,7 @@ struct XPLMDump {
 		XPLMDebugString(line.c_str());
 		XPLMDebugString(".\n");
 	}
-	
+
 	XPLMDump& operator<<(const char * rhs) {
 		XPLMDebugString(rhs);
 		return *this;
@@ -1081,7 +1085,7 @@ CSLPlane_t *	CSL_MatchPlane(const char * inICAO, const char * inAirline, const c
 	XPLMPluginID	who;
 	int		total, active;
 	XPLMCountAircraft(&total, &active, &who);
-	
+
 	// First build up our various keys and info we need to do the match.
 	std::string	icao(inICAO);
 	std::string	airline(inAirline ? inAirline : "");

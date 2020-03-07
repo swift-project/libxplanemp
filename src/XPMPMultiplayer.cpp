@@ -49,6 +49,9 @@
 #include <stdio.h>
 #include <set>
 #include <cassert>
+#include <chrono>
+#include <sstream>
+#include <iomanip>
 
 // This prints debug info on our process of loading Austin's planes.
 #define	DEBUG_MANUAL_LOADING	0
@@ -116,6 +119,30 @@ static	int				XPMPDisablePlaneCount(
 		XPLMDrawingPhase     inPhase,
 		int                  inIsBefore,
 		void *               inRefcon);
+
+std::string XPMPTimestamp() {
+	std::ostringstream ss;
+
+	// https://en.cppreference.com/w/cpp/io/manip/put_time
+	// https://stackoverflow.com/a/35157784/356726
+	using namespace std::chrono;
+	const auto clockNow = system_clock::now();
+	const time_t now = system_clock::to_time_t(clockNow);
+
+	// get number of milliseconds for the current second (remainder after division into seconds)
+	const auto ms = duration_cast<milliseconds>(clockNow.time_since_epoch()) % 1000;
+	struct tm tms;
+#if defined (IBM)
+	localtime_s(&tms, &now);
+#else
+	localtime_r(&now, &tms);
+#endif
+	ss	<< std::put_time(&tms, "%T")
+		<< "." << std::setfill('0') << std::setw(3) << ms.count()
+		<< " ";
+
+	return ss.str();
+}
 
 #ifdef DEBUG_GL
 static void xpmpKhrDebugProc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *param)
