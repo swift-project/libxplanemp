@@ -36,17 +36,17 @@
 #define XUTILS_EXCLUDE_MAC_CRAP 1
 #endif
 
-#if APL
+#if defined(APL)
 //using namespace Metrowerks;
 #endif
 
 static char * my_fgets(char * s, int n, FILE * file)
 {
 	char *	p = s;
-	
+
 	if (--n < 0)
-		return(NULL);
-	
+		return(nullptr);
+
 	if (n)
 	{
 		int c;
@@ -60,7 +60,7 @@ static char * my_fgets(char * s, int n, FILE * file)
 					break;
 				else
 				{
-					return(NULL);
+					return(nullptr);
 				}
 			}
 			
@@ -143,7 +143,7 @@ void	BreakString(const std::string& line, std::vector<std::string>& words)
 		std::string::const_iterator s = i;
 		while (s < line.end() && isspace(*s))
 			++s;
-		
+
 		std::string::const_iterator e = s;
 		while (e < line.end() && !isspace(*e))
 			++e;
@@ -287,7 +287,7 @@ void		ExtractPath(string& ioPath)
 		ioPath = ioPath.substr(0, sep);
 }
 #endif
-#if APL
+#if defined(APL)
 
 #if !defined(XUTILS_EXCLUDE_MAC_CRAP)
 
@@ -298,7 +298,7 @@ OSErr	FindSuperFolder(const FSSpec& inItem, FSSpec& outFolder)
 	CInfoPBRec	paramBlock;
 	OSErr		err;
 
-	paramBlock.dirInfo.ioCompletion = 	NULL;
+	paramBlock.dirInfo.ioCompletion = 	nullptr;
 	paramBlock.dirInfo.ioNamePtr =		(StringPtr) (&(outFolder.name));
 	paramBlock.dirInfo.ioVRefNum = 		inItem.vRefNum;
 	paramBlock.dirInfo.ioFDirIndex = 	-1;
@@ -377,7 +377,7 @@ bool	ExtractFixedRecordLong(
 	std::string	foo;
 	ExtractFixedRecordString(inLine, inBegin, inEnd, foo);
 	if (foo.empty())	return false;
-	outLong = strtol(foo.c_str(), NULL, 10);
+	outLong = strtol(foo.c_str(), nullptr, 10);
 	return true;
 }				
 
@@ -390,7 +390,7 @@ bool	ExtractFixedRecordUnsignedLong(
 	std::string	foo;
 	ExtractFixedRecordString(inLine, inBegin, inEnd, foo);
 	if (foo.empty())	return false;
-	outUnsignedLong = strtoul(foo.c_str(), NULL, 10);
+	outUnsignedLong = strtoul(foo.c_str(), nullptr, 10);
 	return true;
 }				
 
@@ -613,7 +613,7 @@ void	DecomposeObj(const XObj& inObj, XObj& outObj, int maxValence)
 	}
 }
 
-bool DoesFileExist(const std::string &filePath)
+bool	DoesFileExist(const std::string &filePath)
 {
 	std::ifstream infile(filePath);
 	return infile.good();

@@ -40,7 +40,7 @@
 
 using std::max;
 
-#if APL
+#if defined(APL)
 #include <Carbon/Carbon.h>
 #include "XPLMPlugin.h"
 #endif
@@ -61,7 +61,7 @@ enum {
  * UTILITY ROUTINES
  ************************************************************************/
 
-#if APL
+#if defined(APL)
 
 template <typename T>
 struct CFSmartPtr {
@@ -859,12 +859,12 @@ void ParseFullPackage(const std::string &content, CSLPackage_t &package)
 		}
 	}
 
-    // Remove all planes with errors
-    auto it = std::remove_if(package.planes.begin(), package.planes.end(), [](const CSLPlane_t &plane)
-    {
-        return plane.hasErrors;
-    });
-    package.planes.erase(it, package.planes.end());
+	// Remove all planes with errors
+	auto it = std::remove_if(package.planes.begin(), package.planes.end(), [](const CSLPlane_t &plane)
+	{
+		return plane.hasErrors;
+	});
+	package.planes.erase(it, package.planes.end());
 }
 
 bool isPackageAlreadyLoaded(const std::string &packagePath)
@@ -1110,7 +1110,7 @@ CSLPlane_t *	CSL_MatchPlane(const char * inICAO, const char * inAirline, const c
 			if (gIntPrefsFunc("debug", "model_matching", 0)) {
 				sprintf(buf, XPMP_CLIENT_NAME " MATCH -    Skipping %d Due nil Group\n", n);
 				XPLMDebugString(buf);
-			}			
+			}
 		}
 
 

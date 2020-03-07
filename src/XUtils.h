@@ -120,7 +120,7 @@ private:
 
 	XPointPool(const XPointPool&);
 	XPointPool& operator=(const XPointPool&);
-	
+
 	struct	XPointPoolImp;
 
 	std::unique_ptr<XPointPoolImp> mImp;
@@ -130,6 +130,6 @@ private:
 void	DecomposeObjCmd(const XObjCmd& inCmd, std::vector<XObjCmd>& outCmd, int maxValence);
 void	DecomposeObj(const XObj& inObj, XObj& outObj, int maxValence);
 
-bool DoesFileExist(const std::string &filePath);
+bool	DoesFileExist(const std::string &filePath);
 
 #endif

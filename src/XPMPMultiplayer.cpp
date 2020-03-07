@@ -157,18 +157,18 @@ static void xpmpKhrDebugProc(GLenum source, GLenum type, GLuint id, GLenum sever
 
 void XPMPSetupGLDebug()
 {
-	glDebugMessageCallback(xpmpKhrDebugProc, NULL);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE);
+	glDebugMessageCallback(xpmpKhrDebugProc, nullptr);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE);
 
-	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, NULL, GL_TRUE);
-	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
-	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, NULL, GL_TRUE);
-	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, NULL, GL_TRUE);
-	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_TYPE_PUSH_GROUP, GL_DONT_CARE, 0, NULL, GL_TRUE);
-	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_TYPE_POP_GROUP, GL_DONT_CARE, 0, NULL, GL_TRUE);
-	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_TYPE_MARKER, GL_DONT_CARE, 0, NULL, GL_TRUE);
-	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, nullptr, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, nullptr, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_TYPE_PUSH_GROUP, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_TYPE_POP_GROUP, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_TYPE_MARKER, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 	// eat errors.
 	while (GL_NO_ERROR != glGetError())
 		;
@@ -280,7 +280,7 @@ void XPMPMultiplayerCleanup(void)
 {
 	XPMPDeinitDefaultPlaneRenderer();
 	CSL_DeInit();
-	OGLDEBUG(glDebugMessageCallback(NULL, NULL));
+	OGLDEBUG(glDebugMessageCallback(nullptr, nullptr));
 }
 
 
@@ -304,7 +304,7 @@ const  char * XPMPMultiplayerEnable(void)
 				gPackages[p].planes[pp].austin_idx = static_cast<int>(gPlanePaths.size());
 				char	buf[1024];
 				strcpy(buf, gPackages[p].planes[pp].file_path.c_str());
-#if APL
+#if defined(APL)
 				if (XPLMIsFeatureEnabled("XPLM_USE_NATIVE_PATHS") == 0)
 				{
 					Posix2HFSPath(buf, buf, 1024);
@@ -325,11 +325,11 @@ const  char * XPMPMultiplayerEnable(void)
 #endif	
 		ptrs.push_back((char *) gPlanePaths[n].c_str());
 	}
-	ptrs.push_back(NULL);
+	ptrs.push_back(nullptr);
 	
 	
 	// Attempt to grab multiplayer planes, then analyze.
-	int	result = XPLMAcquirePlanes(&(*ptrs.begin()), NULL, NULL);
+	int	result = XPLMAcquirePlanes(&(*ptrs.begin()), nullptr, nullptr);
 	if (result) {
 		gHasControlOfAIAircraft = true;
 		XPLMSetActiveAircraftCount(1);
@@ -488,7 +488,7 @@ XPMPPlaneID		XPMPCreatePlane(
 	plane->model = CSL_MatchPlane(inICAOCode, inAirline, inLivery, &plane->match_quality, true);
 
 	if (! plane->model) { return nullptr; }
-	
+
 	plane->pos.size = sizeof(plane->pos);
 	plane->surface.size = sizeof(plane->surface);
 	plane->radar.size = sizeof(plane->radar);
@@ -652,7 +652,7 @@ XPMPPlaneID		XPMPGetNthPlane(
 		long 					index)
 {
 	if ((index < 0) || (index >= static_cast<long>(gPlanes.size())))
-		return NULL;
+		return nullptr;
 
 	return gPlanes[index].get();
 }							
@@ -660,7 +660,7 @@ XPMPPlaneID		XPMPGetNthPlane(
 
 void XPMPGetPlaneICAOAndLivery(
 		XPMPPlaneID				inPlane,
-		char *					outICAOCode,	// Can be NULL
+		char *					outICAOCode,	// Can be nullptr
 		char *					outLivery)
 {
 	XPMPPlanePtr	plane = XPMPPlaneFromID(inPlane);
@@ -812,7 +812,7 @@ int	XPMPRenderMultiplayerPlanes(
 	static XPLMDataRef wrt = XPLMFindDataRef("sim/graphics/view/world_render_type");
 	static XPLMDataRef prt = XPLMFindDataRef("sim/graphics/view/plane_render_type");
 	
-	int is_shadow = wrt != NULL && XPLMGetDatai(wrt) != 0;
+	int is_shadow = wrt != nullptr && XPLMGetDatai(wrt) != 0;
 	
 	if(prt)
 		is_blend = XPLMGetDatai(prt) == 2;
@@ -840,7 +840,7 @@ int	XPMPRenderPlaneLabels(
 bool			XPMPIsICAOValid(
 		const char *				inICAO)
 {
-	return CSL_MatchPlane(inICAO, "", "", NULL, false) != NULL;
+	return CSL_MatchPlane(inICAO, "", "", nullptr, false) != nullptr;
 }
 
 int 		XPMPGetPlaneModelQuality(

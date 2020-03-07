@@ -44,7 +44,7 @@ struct	one_inst {
 	XPLMPlaneDrawState_t *	state;
 };
 
-static one_inst *	s_cur_plane = NULL;
+static one_inst *	s_cur_plane = nullptr;
 
 enum {
 	gear_rat = 0,
@@ -91,28 +91,28 @@ const char * dref_names[dref_dim] = {
 
 static float obj_get_float(void * inRefcon)
 {
-	if(s_cur_plane == NULL) return 0.0f;
+	if(s_cur_plane == nullptr) return 0.0f;
 	
 	intptr_t v = reinterpret_cast<intptr_t>(inRefcon);
 	switch(v)
 	{
-	case gear_rat:			return s_cur_plane->state->gearPosition;		break;
-	case flap_rat:			return s_cur_plane->state->flapRatio;			break;
-	case spoi_rat:			return s_cur_plane->state->spoilerRatio;		break;
-	case sbrk_rat:			return s_cur_plane->state->speedBrakeRatio;		break;
-	case slat_rat:			return s_cur_plane->state->slatRatio;			break;
-	case swep_rat:			return s_cur_plane->state->wingSweep;			break;
-	case thrs_rat:			return s_cur_plane->state->thrust;				break;
-	case ptch_rat:			return s_cur_plane->state->yokePitch;			break;
-	case head_rat:			return s_cur_plane->state->yokeHeading;			break;
-	case roll_rat:			return s_cur_plane->state->yokeRoll;			break;
-	case thrs_rev:			return static_cast<float>((s_cur_plane->state->thrust < 0.0) ? 1.0 : 0.0); break; //if thrust less than zero, reverse is on
+	case gear_rat:			return s_cur_plane->state->gearPosition;
+	case flap_rat:			return s_cur_plane->state->flapRatio;
+	case spoi_rat:			return s_cur_plane->state->spoilerRatio;
+	case sbrk_rat:			return s_cur_plane->state->speedBrakeRatio;
+	case slat_rat:			return s_cur_plane->state->slatRatio;
+	case swep_rat:			return s_cur_plane->state->wingSweep;
+	case thrs_rat:			return s_cur_plane->state->thrust;
+	case ptch_rat:			return s_cur_plane->state->yokePitch;
+	case head_rat:			return s_cur_plane->state->yokeHeading;
+	case roll_rat:			return s_cur_plane->state->yokeRoll;
+	case thrs_rev:			return static_cast<float>((s_cur_plane->state->thrust < 0.0) ? 1.0 : 0.0);	//if thrust less than zero, reverse is on
 
-	case tax_lite_on:		return static_cast<float>(s_cur_plane->lights.taxiLights);			break;
-	case lan_lite_on:		return static_cast<float>(s_cur_plane->lights.landLights);			break;
-	case bcn_lite_on:		return static_cast<float>(s_cur_plane->lights.bcnLights);			break;
-	case str_lite_on:		return static_cast<float>(s_cur_plane->lights.strbLights);			break;
-	case nav_lite_on:		return static_cast<float>(s_cur_plane->lights.navLights);			break;
+	case tax_lite_on:		return static_cast<float>(s_cur_plane->lights.taxiLights);
+	case lan_lite_on:		return static_cast<float>(s_cur_plane->lights.landLights);
+	case bcn_lite_on:		return static_cast<float>(s_cur_plane->lights.bcnLights);
+	case str_lite_on:		return static_cast<float>(s_cur_plane->lights.strbLights);
+	case nav_lite_on:		return static_cast<float>(s_cur_plane->lights.navLights);
 
 	default:
 		return 0.0f;
@@ -125,7 +125,7 @@ int obj_get_float_array(
 		int                  /*inOffset*/,
 		int                  inCount)
 {
-	if(inValues == NULL)
+	if(inValues == nullptr)
 		return 1;
 	float rv = obj_get_float(inRefcon);
 	for(int i = 0; i < inCount; ++i)
@@ -304,12 +304,12 @@ void	obj_init()
 	{
 		XPLMRegisterDataAccessor(
 					dref_names[i], xplmType_Float|xplmType_FloatArray, 0,
-					NULL, NULL,
-					obj_get_float, NULL,
-					NULL, NULL,
-					NULL, NULL,
-					obj_get_float_array, NULL,
-					NULL, NULL, reinterpret_cast<void *>(static_cast<intptr_t>(i)), NULL);
+					nullptr, nullptr,
+					obj_get_float, nullptr,
+					nullptr, nullptr,
+					nullptr, nullptr,
+					obj_get_float_array, nullptr,
+					nullptr, nullptr, reinterpret_cast<void *>(static_cast<intptr_t>(i)), nullptr);
 	}
 }
 
