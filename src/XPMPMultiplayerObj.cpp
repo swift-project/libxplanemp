@@ -305,6 +305,7 @@ TextureManager::ResourceHandle OBJ_LoadTexture(const std::string &path)
 	texture.id = 0;
 	if (!LoadImageFromFile(path, true, derez, im, NULL, NULL))
 	{
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": WARNING: ");
 		XPLMDebugString(path.c_str());
 		XPLMDebugString(" failed to load.");
@@ -364,6 +365,7 @@ ObjManager::ResourceHandle OBJ_LoadModel(const std::string &inFilePath)
 	bool ok = XObjReadWrite::read(path, objInfo.obj);
 	if (!ok)
 	{
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": WARNING: ");
 		XPLMDebugString(path.c_str());
 		XPLMDebugString(" failed to load.");

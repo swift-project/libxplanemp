@@ -43,6 +43,7 @@
 #include "XPLMUtilities.h"
 
 #include "XOGLUtils.h"
+#include "XUtils.h"
 //#include "PlatformUtils.h"
 
 #include <stdlib.h>
@@ -598,6 +599,7 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 
 	if (planePtr->model->plane_type == plane_Obj)
 	{
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": Start loading OBJ7 ");
 		XPLMDebugString("(");
 		XPLMDebugString(inModelName);
@@ -607,6 +609,7 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 	}
 	else if (planePtr->model->plane_type == plane_Obj8)
 	{
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": Start loading OBJ8 ");
 		XPLMDebugString("(");
 		XPLMDebugString(inModelName);
@@ -616,6 +619,7 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 	}
 	else
 	{
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": Unknown model type ");
 		XPLMDebugString("(");
 		XPLMDebugString(inModelName);

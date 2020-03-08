@@ -24,6 +24,7 @@
 #include "XPMPMultiplayerObj8.h"
 #include "XPMPMultiplayerVars.h"
 #include "XStringUtils.h"
+#include "XUtils.h"
 #include "XPLMScenery.h"
 #include "XPLMUtilities.h"
 #include "XPLMDataAccess.h"
@@ -196,6 +197,7 @@ void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, bool
 			cloneObj8WithDifferentTexture(sourceObjFile, destObjFile, objForAcf.textureFile, objForAcf.litTextureFile);
 			gThreadSynchronizer.queueCall([=]()
 			{
+				XPLMDebugString(XPMPTimestamp().c_str());
 				XPLMDebugString(XPMP_CLIENT_NAME ": Cloning finished ");
 				XPLMDebugString("(");
 				XPLMDebugString(fileNameToLoad.c_str());
@@ -207,6 +209,7 @@ void Obj8Manager::loadAsync(obj_for_acf &objForAcf, const std::string &mtl, bool
 		{
 			gThreadSynchronizer.queueCall([=]()
 			{
+				XPLMDebugString(XPMPTimestamp().c_str());
 				XPLMDebugString(XPMP_CLIENT_NAME ": Started async loading ");
 				XPLMDebugString("(");
 				XPLMDebugString(fileNameToLoad.c_str());
@@ -244,6 +247,7 @@ void Obj8Manager::objectLoaded(const std::string &fileName, XPLMObjectRef object
 		ResourceHandle handle(new Obj8Ref_t(obj8Ref), Obj8RefDeleter);
 		m_resourceCache[fileName] = handle;
 
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": Async loading succeeded ");
 		XPLMDebugString("(");
 		XPLMDebugString(fileName.c_str());
@@ -261,6 +265,7 @@ void Obj8Manager::objectLoaded(const std::string &fileName, XPLMObjectRef object
 	}
 	else
 	{
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": Async loading failed ");
 		XPLMDebugString("(");
 		XPLMDebugString(fileName.c_str());
@@ -326,6 +331,7 @@ bool cloneObj8WithDifferentTexture(const std::string &sourceFileName, const std:
 		std::string srcObjContent = getFileContent(sourceFileName);
 		if (srcObjContent.empty())
 		{
+			XPLMDebugString(XPMPTimestamp().c_str());
 			XPLMDebugString(std::string(XPMP_CLIENT_NAME" Warning: Could not open " + sourceFileName + " for cloning.\n").c_str());
 			return false;
 		}
@@ -380,6 +386,7 @@ bool cloneObj8WithDifferentTexture(const std::string &sourceFileName, const std:
 			sout << line << std::endl;
 		}
 		writeFileContent(targetFileName, sout.str());
+		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(std::string(XPMP_CLIENT_NAME": Modified obj8 has been created at: " + targetFileName + "\n").c_str());
 	}
 	return true;
@@ -425,6 +432,7 @@ void OBJ_LoadObj8Async(const std::shared_ptr<XPMPPlane_t> &plane)
 				plane->allObj8Loaded = true;
 				gThreadSynchronizer.queueCall([=]()
 				{
+					XPLMDebugString(XPMPTimestamp().c_str());
 					XPLMDebugString(XPMP_CLIENT_NAME ": Plane fully loaded ");
 					XPLMDebugString("(");
 					XPLMDebugString(plane->pos.label);
