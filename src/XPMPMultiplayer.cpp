@@ -394,6 +394,10 @@ const  char * XPMPMultiplayerEnable(void)
 
 	XPLMRegisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, -1, &gThreadSynchronizer);
 
+	if (result == 0)
+	{
+		return XPMP_CLIENT_LONGNAME " was not able to start up multiplayer visuals because another plugin is controlling aircraft.";
+	}
 	return "";
 }
 
