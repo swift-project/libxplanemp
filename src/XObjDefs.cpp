@@ -55,7 +55,7 @@ cmd_info	gCmds[] = {
 	{	attr_Cull,			type_Attr,		"ATTR_cull",		0 },
 	{	attr_NoCull,		type_Attr,		"ATTR_no_cull",		0 },
 	{	attr_Offset,		type_Attr,		"ATTR_poly_os",		1 },
-	{   attr_Max,			type_None,		NULL,				0 }
+	{   attr_Max,			type_None,		nullptr,			0 }
 };
 
 

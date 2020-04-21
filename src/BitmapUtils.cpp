@@ -86,7 +86,7 @@ int		CreateBitmapFromFile(const char * inFilePath, struct ImageInfo * outImageIn
 	int 					err = 0;
 
 	FILE *fi = fopen(inFilePath, "rb");
-	if (fi == NULL)
+	if (fi == nullptr)
 		goto bail;
 
 	/*  First we read in the headers, endian flip them, sanity check them, and decide how big our
@@ -137,7 +137,7 @@ int		CreateBitmapFromFile(const char * inFilePath, struct ImageInfo * outImageIn
 	
 bail:
 	err = errno;
-	if (fi != NULL)
+	if (fi != nullptr)
 		fclose(fi);
 	DestroyBitmap(*outImageInfo);
 	if (err == 0)
@@ -187,7 +187,7 @@ int		WriteBitmapToFile(const struct ImageInfo * inImage, const char * inFilePath
 	BMP_EndianFlipInt(&imageDesc.colorsImportant);
 
 	FILE *fi = fopen(inFilePath, "wb");
-	if (fi == NULL)
+	if (fi == nullptr)
 		goto bail;
 	
 	/* We can just write out two headers and the data and be done. */
@@ -204,7 +204,7 @@ int		WriteBitmapToFile(const struct ImageInfo * inImage, const char * inFilePath
 
 bail:
 	err = errno;
-	if (fi != NULL)
+	if (fi != nullptr)
 		fclose(fi);
 	if (err == 0)
 		err = -1;
@@ -715,7 +715,7 @@ int		CreateBitmapFromJPEG(const char * inFilePath, struct ImageInfo * outImageIn
 	// We bail immediately if the file is no good.  This prevents us from
 	// having to keep track of file openings; if we have a problem, but the file must be
 	// closed.
-	outImageInfo->data = NULL;
+	outImageInfo->data = nullptr;
 	FILE * fi = fopen(inFilePath, "rb");
 	if (!fi) return errno;
 
@@ -835,9 +835,9 @@ int		CreateBitmapFromJPEGData(void * inBytes, int inLength, struct ImageInfo * o
 void my_error  (png_structp,png_const_charp /*err*/){}
 void my_warning(png_structp,png_const_charp /*err*/){}
 
-unsigned char *			png_start_pos 	= NULL;
-unsigned char *			png_end_pos 	= NULL;
-unsigned char *			png_current_pos	= NULL;
+unsigned char *			png_start_pos 	= nullptr;
+unsigned char *			png_end_pos 	= nullptr;
+unsigned char *			png_current_pos	= nullptr;
 
 void png_buffered_read_func(png_structp png_ptr, png_bytep data, png_size_t length)
 {
@@ -854,12 +854,12 @@ int		CreateBitmapFromPNG(const char * inFilePath, struct ImageInfo * outImageInf
 	png_uint_32	width, height;
 	int bit_depth,color_type,interlace_type,compression_type,P_filter_type;
 
-	png_structp		pngPtr = NULL;
-	png_infop		infoPtr = NULL;
-	unsigned char *	volatile buffer = NULL;
-	FILE * volatile	file = NULL;
+	png_structp		pngPtr = nullptr;
+	png_infop		infoPtr = nullptr;
+	unsigned char *	volatile buffer = nullptr;
+	FILE * volatile	file = nullptr;
 	size_t			fileLength = 0;
-	char** volatile	rows = NULL;
+	char** volatile	rows = nullptr;
 	double lcl_gamma;			// This will be the gamma of the file if it has one.
 #if APL							// Macs and PCs have different gamma responses.
 	double screen_gamma=1.8;	// Darks look darker and brights brighter on the PC.
@@ -871,7 +871,7 @@ int		CreateBitmapFromPNG(const char * inFilePath, struct ImageInfo * outImageInf
 	// libpng is not thread safe. Serialize all calls into it.
 	std::lock_guard<std::mutex> lock( instance_lock ) ;
 
-	pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,(png_voidp)NULL,my_error,my_warning);
+	pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,(png_voidp)nullptr,my_error,my_warning);
 	if(!pngPtr) goto bail;
 
 	infoPtr=png_create_info_struct(pngPtr);
@@ -886,7 +886,7 @@ int		CreateBitmapFromPNG(const char * inFilePath, struct ImageInfo * outImageInf
 	if (!buffer) goto bail;
 	if (fread(buffer, 1, fileLength, file) != fileLength) goto bail;
 	fclose(file);
-	file = NULL;
+	file = nullptr;
 
 	png_start_pos = buffer;
 	png_current_pos = buffer;
@@ -900,8 +900,8 @@ int		CreateBitmapFromPNG(const char * inFilePath, struct ImageInfo * outImageInf
 		goto bail;
 	}
 
-	png_init_io      (pngPtr,NULL						);
-	png_set_read_fn  (pngPtr,NULL,png_buffered_read_func);
+	png_init_io      (pngPtr,nullptr					);
+	png_set_read_fn  (pngPtr,nullptr,png_buffered_read_func);
 	png_set_sig_bytes(pngPtr,8							);	png_current_pos+=8;
 	png_read_info	 (pngPtr,infoPtr					);
 
@@ -946,18 +946,18 @@ int		CreateBitmapFromPNG(const char * inFilePath, struct ImageInfo * outImageInf
 
 	png_read_image(pngPtr,(png_byte**)rows);										// Now we just tell pnglib to read in the data.  When done our row ptrs will be filled in.
 	free(rows);
-	rows = NULL;
+	rows = nullptr;
 
 	delete [] buffer;
-	buffer = NULL;
+	buffer = nullptr;
 
-	png_destroy_read_struct(&pngPtr,(png_infopp)&infoPtr,(png_infopp)NULL);
+	png_destroy_read_struct(&pngPtr,(png_infopp)&infoPtr,(png_infopp)nullptr);
 	
 	return 0;
 bail:
 
-	if (pngPtr && infoPtr)		png_destroy_read_struct(&pngPtr,(png_infopp)&infoPtr,(png_infopp)NULL);
-	else if (pngPtr)			png_destroy_read_struct(&pngPtr,(png_infopp)NULL,(png_infopp)NULL);
+	if (pngPtr && infoPtr)		png_destroy_read_struct(&pngPtr,(png_infopp)&infoPtr,(png_infopp)nullptr);
+	else if (pngPtr)			png_destroy_read_struct(&pngPtr,(png_infopp)nullptr,(png_infopp)nullptr);
 	if (buffer)					delete [] buffer;
 	if (file)					fclose(file);
 	DestroyBitmap(*outImageInfo);

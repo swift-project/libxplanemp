@@ -262,7 +262,7 @@ int OBJ_LoadLightTexture(const std::string &inFilePath, bool inForceMaxTex)
 		derez = 0;
 
 	GLuint texNum = 0;
-	bool ok = LoadTextureFromFile(path, true, false, true, derez, &texNum, NULL, NULL);
+	bool ok = LoadTextureFromFile(path, true, false, true, derez, &texNum, nullptr, nullptr);
 	if (!ok) return 0;
 
 	sTexes[path] = texNum;
@@ -303,7 +303,7 @@ TextureManager::ResourceHandle OBJ_LoadTexture(const std::string &path)
 	ImageInfo im;
 	CSLTexture_t texture;
 	texture.id = 0;
-	if (!LoadImageFromFile(path, true, derez, im, NULL, NULL))
+	if (!LoadImageFromFile(path, true, derez, im, nullptr, nullptr))
 	{
 		XPLMDebugString(XPMPTimestamp().c_str());
 		XPLMDebugString(XPMP_CLIENT_NAME ": WARNING: ");

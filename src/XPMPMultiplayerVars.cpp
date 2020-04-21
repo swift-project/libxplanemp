@@ -24,12 +24,12 @@
 #include <stddef.h>
 
 
-int								(* gIntPrefsFunc)(const char *, const char *, int) = NULL;
-float							(* gFloatPrefsFunc)(const char *, const char *, float) = NULL;
+int								(* gIntPrefsFunc)(const char *, const char *, int) = nullptr;
+float							(* gFloatPrefsFunc)(const char *, const char *, float) = nullptr;
 
 XPMPPlaneVector					gPlanes;
 XPMPPlaneNotifierVector			gObservers;
-XPMPRenderPlanes_f				gRenderer = NULL;
+XPMPRenderPlanes_f				gRenderer = nullptr;
 void *							gRendererRef;
 int								gDumpOneRenderCycle = 0;
 int 							gEnableCount = 1;

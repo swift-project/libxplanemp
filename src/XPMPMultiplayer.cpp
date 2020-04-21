@@ -386,11 +386,11 @@ const  char * XPMPMultiplayerEnable(void)
 
 	// Register the actual drawing func.
 	XPLMRegisterDrawCallback(XPMPRenderMultiplayerPlanes,
-		xplm_Phase_Airplanes, 0, /* after*/ 0 /* refcon */);
+		xplm_Phase_Airplanes, 0, /* after*/ nullptr /* refcon */);
 
 	// Register the label drawing func.
 	XPLMRegisterDrawCallback(XPMPRenderPlaneLabels,
-							 xplm_Phase_Window, 1 /* before */, 0 /* refcon */);
+							 xplm_Phase_Window, 1 /* before */, nullptr /* refcon */);
 
 	XPLMRegisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, -1, &gThreadSynchronizer);
 
@@ -416,8 +416,8 @@ void XPMPMultiplayerDisable(void)
 		}
 	}
 
-	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, 0);
-	XPLMUnregisterDrawCallback(XPMPRenderPlaneLabels, xplm_Phase_Window, 1, 0);
+	XPLMUnregisterDrawCallback(XPMPRenderMultiplayerPlanes, xplm_Phase_Airplanes, 0, nullptr);
+	XPLMUnregisterDrawCallback(XPMPRenderPlaneLabels, xplm_Phase_Window, 1, nullptr);
 	XPLMUnregisterFlightLoopCallback(ThreadSynchronizer::flightLoopCallback, &gThreadSynchronizer);
 }
 

@@ -79,13 +79,13 @@ struct CFSmartPtr {
 int Posix2HFSPath(const char *path, char *result, int resultLen)
 {
 	CFSmartPtr<CFStringRef>		inStr(CFStringCreateWithCString(kCFAllocatorDefault, path ,kCFStringEncodingMacRoman));
-	if (inStr == NULL) return -1;
+	if (inStr == nullptr) return -1;
 	
 	CFSmartPtr<CFURLRef>		url(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, inStr, kCFURLPOSIXPathStyle,0));
-	if (url == NULL) return -1;
+	if (url == nullptr) return -1;
 	
 	CFSmartPtr<CFStringRef>		outStr(CFURLCopyFileSystemPath(url, kCFURLHFSPathStyle));
-	if (outStr == NULL) return -1;
+	if (outStr == nullptr) return -1;
 	
 	if (!CFStringGetCString(outStr, result, resultLen, kCFStringEncodingMacRoman))
 		return -1;
@@ -98,13 +98,13 @@ int HFS2PosixPath(const char *path, char *result, int resultLen)
 	bool is_dir = (path[strlen(path)-1] == ':');
 
 	CFSmartPtr<CFStringRef>		inStr(CFStringCreateWithCString(kCFAllocatorDefault, path ,kCFStringEncodingMacRoman));
-	if (inStr == NULL) return -1;
+	if (inStr == nullptr) return -1;
 	
 	CFSmartPtr<CFURLRef>		url(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, inStr, kCFURLHFSPathStyle,0));
-	if (url == NULL) return -1;
+	if (url == nullptr) return -1;
 	
 	CFSmartPtr<CFStringRef>		outStr(CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle));
-	if (outStr == NULL) return -1;
+	if (outStr == nullptr) return -1;
 	
 	if (!CFStringGetCString(outStr, result, resultLen, kCFStringEncodingMacRoman))
 		return -1;
@@ -209,7 +209,7 @@ char * fgets_multiplatform(char * s, int n, FILE * file)
 	// Save one slot for the null.  If we do not have enough memory
 	// to do this, bail.
 	if (--n < 0)
-		return(NULL);
+		return(nullptr);
 	
 	// Only bother to read if we have enough space in the char buf.
 	if (n)
@@ -226,8 +226,8 @@ char * fgets_multiplatform(char * s, int n, FILE * file)
 					break;
 				else
 				{
-					// Haven't read yet?  I/O error?  Return NULL!
-					return(NULL);
+					// Haven't read yet?  I/O error?  Return nullptr!
+					return(nullptr);
 				}
 			}
 			
@@ -252,7 +252,7 @@ char * fgets_multiplatform(char * s, int n, FILE * file)
 		}
 	}
 
-	// Unless we're bailing with NULL, we MUST null terminate.
+	// Unless we're bailing with nullptr, we MUST null terminate.
 	*p = 0;
 	
 	return(s);
@@ -590,7 +590,7 @@ bool ParseObj8Command(const std::vector<std::string> &tokens, CSLPackage_t &pack
 		// should probaby freak out here.
 	}
 
-	att.handle = NULL;
+	att.handle = nullptr;
 	att.sourceFile = absolutePath;
 
 	if (tokens.size() >= 5)
@@ -1158,7 +1158,7 @@ CSLPlane_t *	CSL_MatchPlane(const char * inICAO, const char * inAirline, const c
 					if (gPackages[p].planes[iter->second].plane_type != plane_Obj ||
 							gPackages[p].planes[iter->second].obj_idx != -1)
 					{
-						if (NULL != match_quality) *match_quality = n;
+						if (nullptr != match_quality) *match_quality = n;
 
 						if (gIntPrefsFunc("debug", "model_matching", 0)) {
 							sprintf(buf, XPMP_CLIENT_NAME " MATCH - Found: %s/%s/%s : %s - %s\n", 
@@ -1179,7 +1179,7 @@ CSLPlane_t *	CSL_MatchPlane(const char * inICAO, const char * inAirline, const c
 	{
 		XPLMDebugString(XPMP_CLIENT_NAME " MATCH - No match.\n");
 	}
-	if (NULL != match_quality) *match_quality = -1;
+	if (nullptr != match_quality) *match_quality = -1;
 
 
 
@@ -1276,9 +1276,9 @@ CSLPlane_t *	CSL_MatchPlane(const char * inICAO, const char * inAirline, const c
 		XPLMDebugString(std::string("gAircraftCodes.find(" + icao + ") returned no match.\n").c_str());
 	}
 
-	if (!strcmp(inICAO, gDefaultPlane.c_str())) return NULL;
-	if (!use_default) return NULL;
-	return CSL_MatchPlane(gDefaultPlane.c_str(), "", "", NULL, false);
+	if (!strcmp(inICAO, gDefaultPlane.c_str())) return nullptr;
+	if (!use_default) return nullptr;
+	return CSL_MatchPlane(gDefaultPlane.c_str(), "", "", nullptr, false);
 }
 
 void	CSL_Dump(void)
