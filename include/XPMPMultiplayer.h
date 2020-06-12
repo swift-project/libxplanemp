@@ -88,7 +88,7 @@ extern "C" {
  * your position every rendering frame.  Higher level APIs can use velocity and acceleration.
  *
  */
-typedef	struct {
+typedef	struct DummyName {
 	long	size;
 	double	lat = 0.0;
 	double	lon = 0.0;
