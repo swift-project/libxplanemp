@@ -568,7 +568,7 @@ XPMPPlaneID     XPMPCreatePlaneWithModelName(const char *inModelName, const char
 	// Find the model
 	for (auto &package : gPackages)
 	{
-		auto cslPlane = std::find_if(package.planes.begin(), package.planes.end(), [inModelName](CSLPlane_t p) { return CompareCaseInsensitive(p.getModelName(), inModelName); });
+		auto cslPlane = std::find_if(package.planes.begin(), package.planes.end(), [inModelName](auto &&p) { return CompareCaseInsensitive(p.getModelName(), inModelName); });
 		if (cslPlane != package.planes.end())
 		{
 			plane->model = &(*cslPlane);

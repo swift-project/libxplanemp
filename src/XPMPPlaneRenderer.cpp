@@ -940,7 +940,7 @@ void			XPMPDefaultPlaneRenderer(int is_blend)
 				}
 			}
 
-			GLint	vp[4];
+			GLint	vp[4] {};
 			if (viewportRef != nullptr) {
 				// sim/graphics/view/viewport	int[4]	n	Pixels	Current OpenGL viewport in device window coordinates.Note thiat this is left, bottom, right top, NOT left, bottom, width, height!!
 				int vpInt[4] = {0,0,0,0};

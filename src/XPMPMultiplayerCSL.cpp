@@ -688,11 +688,9 @@ bool ParseIcaoCommand(const std::vector<std::string> &tokens, CSLPackage_t &pack
 	std::string icao = tokens[1];
 	package.planes.back().icao = icao;
 	std::string group = gGroupings[icao];
-	if (package.matches[match_icao].count(icao) == 0)
-		package.matches[match_icao]	   [icao] = static_cast<int>(package.planes.size()) - 1;
+	package.matches[match_icao].emplace(icao, static_cast<int>(package.planes.size()) - 1);
 	if (!group.empty())
-		if (package.matches[match_group].count(group) == 0)
-			package.matches[match_group]      [group] = static_cast<int>(package.planes.size()) - 1;
+		package.matches[match_group].emplace(group, static_cast<int>(package.planes.size()) - 1);
 
 	return true;
 }
@@ -711,20 +709,16 @@ bool ParseAirlineCommand(const std::vector<std::string> &tokens, CSLPackage_t &p
 	std::string airline = tokens[2];
 	package.planes.back().airline = airline;
 	std::string group = gGroupings[icao];
-	if (package.matches[match_icao_airline].count(icao + " " + airline) == 0)
-		package.matches[match_icao_airline]      [icao + " " + airline] = static_cast<int>(package.planes.size()) - 1;
+	package.matches[match_icao_airline].emplace(icao + " " + airline, static_cast<int>(package.planes.size()) - 1);
 #if USE_DEFAULTING
-	if (package.matches[match_icao		].count(icao				) == 0)
-		package.matches[match_icao		]      [icao				] = package.planes.size() - 1;
+	package.matches[match_icao].emplace(icao, package.planes.size() - 1);
 #endif
 	if (!group.empty())
 	{
 #if USE_DEFAULTING
-		if (package.matches[match_group	     ].count(group				  ) == 0)
-			package.matches[match_group	     ]		[group				  ] = package.planes.size() - 1;
+		package.matches[match_group].emplace(group, package.planes.size() - 1);
 #endif
-		if (package.matches[match_group_airline].count(group + " " + airline) == 0)
-			package.matches[match_group_airline]		[group + " " + airline] = static_cast<int>(package.planes.size()) - 1;
+		package.matches[match_group_airline].emplace(group + " " + airline, static_cast<int>(package.planes.size()) - 1);
 	}
 
 	return true;
@@ -747,23 +741,17 @@ bool ParseLiveryCommand(const std::vector<std::string> &tokens, CSLPackage_t &pa
 	package.planes.back().livery = livery;
 	std::string group = gGroupings[icao];
 #if USE_DEFAULTING
-	if (package.matches[match_icao				].count(icao							   ) == 0)
-		package.matches[match_icao				]	   [icao							   ] = package.planes.size() - 1;
-	if (package.matches[match_icao				].count(icao							   ) == 0)
-		package.matches[match_icao_airline 		]	   [icao + " " + airline			   ] = package.planes.size() - 1;
+	package.matches[match_icao				].emplace(icao,							package.planes.size() - 1);
+	package.matches[match_icao_airline 		].emplace(icao + " " + airline,			package.planes.size() - 1);
 #endif
-	if (package.matches[match_icao_airline_livery ].count(icao + " " + airline + " " + livery) == 0)
-		package.matches[match_icao_airline_livery ]	   [icao + " " + airline + " " + livery] = static_cast<int>(package.planes.size()) - 1;
+	package.matches[match_icao_airline_livery ].emplace(icao + " " + airline + " " + livery, static_cast<int>(package.planes.size()) - 1);
 	if (!group.empty())
 	{
 #if USE_DEFAULTING
-		if (package.matches[match_group		 		 ].count(group							     ) == 0)
-			package.matches[match_group		 		 ]		[group							     ] = package.planes.size() - 1;
-		if (package.matches[match_group_airline		 ].count(group + " " + airline			     ) == 0)
-			package.matches[match_group_airline		 ]		[group + " " + airline			     ] = package.planes.size() - 1;
+		package.matches[match_group		 		 ].emplace(group,							package.planes.size() - 1);
+		package.matches[match_group_airline		 ].emplace(group + " " + airline,			package.planes.size() - 1);
 #endif
-		if (package.matches[match_group_airline_livery ].count(group + " " + airline + " " + livery) == 0)
-			package.matches[match_group_airline_livery ]		[group + " " + airline + " " + livery] = static_cast<int>(package.planes.size()) - 1;
+		package.matches[match_group_airline_livery ].emplace(group + " " + airline + " " + livery, static_cast<int>(package.planes.size()) - 1);
 	}
 
 	return true;
